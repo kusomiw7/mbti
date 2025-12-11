@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MBTI 廣告解鎖測驗系統 - 最終安全優化版</title>
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2895749032536610"
+        crossorigin="anonymous"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 使用 Inter 字體 */
+        :root {
+            font-family: 'Inter', sans-serif;
+        }
+        /* 隱藏滾動條 */
+        body {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body::-webkit-scrollbar {
+            display: none;
+        }
+        /* 自定義顏色配置 */
+        :root {
+            --primary-indigo: #4F46E5;
+            --ad-orange: #F97316;
+        }
+        /* 確保導航欄的樣式在 CDN 載入前就初始化，防止閃爍 */
+        .tab-btn {
+            color: #6B7280; /* text-gray-500 default */
+            background-color: transparent;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-indigo': '#4F46E5',
+                        'primary-light': '#818CF8',
+                        'accent-green': '#10B981',
+                        'ad-orange': '#F97316',
+                        'locked-gray': '#D1D5DB',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+
+    <div id="ad-test-unit" class="text-xs absolute opacity-0 invisible" style="position: absolute; width: 1px; height: 1px;">
+        <ins class="adsbygoogle" data-ad-slot="9999999999"></ins>
+    </div>
+
+    <header class="sticky top-0 bg-white shadow-lg z-20">
+        <div class="max-w-4xl mx-auto flex justify-around p-2 border-b border-gray-200">
+            <button id="tab1" onclick="setActiveTab('tab1')"
+                class="tab-btn w-1/3 py-3 text-xs sm:text-base font-semibold rounded-lg transition duration-200">
+                基本測驗 (16 題)
+            </button>
+            <button id="tab2" onclick="setActiveTab('tab2')"
+                class="tab-btn w-1/3 py-3 text-xs sm:text-base font-semibold rounded-lg transition duration-200">
+                專家測驗 (69 題)
+            </button>
+            <button id="tab3" onclick="setActiveTab('tab3')"
+                class="tab-btn w-1/3 py-3 text-xs sm:text-base font-semibold rounded-lg transition duration-200">
+                精準 Pro (120 題)
+            </button>
+        </div>
+    </header>
+
+    <main id="content-area" class="flex-grow max-w-4xl mx-auto p-4 sm:p-6 w-full">
+        <div id="tab-content" class="bg-white p-6 sm:p-8 rounded-xl shadow-lg border-t-4 border-primary-indigo">
+            <p class="text-center text-gray-500 font-bold">系統正在初始化...</p>
+        </div>
+    </main>
+
+    <script type="text/javascript">
+        // --- 核心資料與狀態 ---
+        const BASIC_QUIZ_COUNT = 16;
+        const EXPERT_QUIZ_COUNT = 69;
+        const CUSTOM_QUIZ_COUNT = 120;
+
+        // JavaScript 狀態變數
+        let activeTab = 'tab1';
+        let isExpertUnlocked = false;
+        let isTab3Accessible = false;
+
+        // 儲存答案 (使用稀疏陣列)
+        let basicAnswers = [];
+        let expertAnswers = [];
+        let customAnswers = [];
+
+        // 追蹤用戶當前正在查看/作答的題目索引 (0-based)
+        let basicIndex = 0;
+        let expertIndex = 0;
+        let customIndex = 0;
+        
+        // 🌟 Ad-Blocker 狀態
+        let isAdBlockerActive = false;
+        
+        // 🌟 用於防止假解鎖的時間戳記 (Anti-Cheat)
+        let pendingUnlockTarget = null;
+        let pendingUnlockTimestamp = 0;
+        const UNLOCK_DELAY_MS = 3000; // 模擬廣告觀看/載入的延遲時間 (3秒)
+
+        // 16 題基本測驗 (實際題目)
+        const basicQuestions = [
+            { id: 1, text: "經過一整天的工作或社交活動後，您通常的感覺是：", options: ["精力充沛，還想繼續活動或交談 (E)", "感到疲憊，需要獨處來充電 (I)"], dichotomy: 'EI' },
+            { id: 2, text: "在一個充滿人的場合中，您傾向於：", options: ["積極參與並是主要的發言人之一 (E)", "保持觀察，更喜歡一對一或小組深度交流 (I)"], dichotomy: 'EI' },
+            { id: 3, text: "您更喜歡處理哪種訊息？", options: ["在外界發生的、具體的、可見的活動 (E)", "在腦海中發生的、內省的、想像中的活動 (I)"], dichotomy: 'EI' },
+            { id: 4, text: "您認為多數人對您的瞭解程度是：", options: ["相當不錯，因為您很開放 (E)", "不夠深入，因為您較為內斂 (I)"], dichotomy: 'EI' },
+            { id: 5, text: "在學習新東西時，您更重視：", options: ["實際的應用、當前的細節和明確的步驟 (S)", "理論基礎、抽象概念和未來的可能性 (N)"], dichotomy: 'SN' },
+            { id: 6, text: "您最享受的對話內容是關於：", options: ["手邊的任務、真實發生的事件或實用資訊 (S)", "哲學、遠見、新穎的想法或比喻 (N)"], dichotomy: 'SN' },
+            { id: 7, text: "您通常信任：", options: ["您的過去經驗和經過驗證的事實 (S)", "您的靈感、直覺或對模式的洞察 (N)"], dichotomy: 'SN' },
+            { id: 8, text: "您認為自己是一個：", options: ["務實且腳踏實地的人 (S)", "富有想像力和原創性的人 (N)"], dichotomy: 'SN' },
+            { id: 9, text: "當您做重大決定時，您會：", options: ["保持客觀，權衡邏輯、效率和利弊 (T)", "考慮對他人的影響、情感價值和個人情況 (F)"], dichotomy: 'TF' },
+            { id: 10, text: "在批評或提出反對意見時，您傾向於：", options: ["直接、坦誠，專注於問題的解決 (T)", "溫和、圓滑，盡量維護和諧的關係 (F)"], dichotomy: 'TF' },
+            { id: 11, text: "您認為稱讚一個人最好是稱讚其：", options: ["智慧、邏輯思維或公平性 (T)", "善良、同理心或熱心助人 (F)"], dichotomy: 'TF' },
+            { id: 12, text: "您認為公正的決定應該基於：", options: ["一套統一、非個人的標準 (T)", "每個人的獨特需求和價值觀 (F)"], dichotomy: 'TF' },
+            { id: 13, text: "對於假期或大專案，您傾向於：", options: ["提前計畫、確定細節並按時完成 (J)", "保持彈性、開放選擇，並在當下決定 (P)"], dichotomy: 'JP' },
+            { id: 14, text: "您通常覺得截止日期是：", options: ["必須遵守的，這讓您有條理地工作 (J)", "可以調整的，這讓您能夠適應變化 (P)"], dichotomy: 'JP' },
+            { id: 15, text: "您的工作或生活空間通常是：", options: ["整潔、有序，所有東西都有固定的位置 (J)", "隨性、有機，雜亂但您知道東西在哪 (P)"], dichotomy: 'JP' },
+            { id: 16, text: "您將生活視為：", options: ["需要被控制、組織和做出結論的結構 (J)", "需要被體驗、探索和保持開放的過程 (P)"], dichotomy: 'JP' },
+        ];
+        
+        // 隨機獲取一個維度 (用於佔位題目)
+        function getRandomDichotomy() {
+            const dichotomies = ['EI', 'SN', 'TF', 'JP'];
+            return dichotomies[Math.floor(Math.random() * dichotomies.length)];
+        }
+        
+        // 佔位問題生成器 (用於專家和 Pro 測驗)
+        function generatePlaceholderQuestions(count, title, startIndex) {
+            const questions = [];
+            for (let i = 0; i < count; i++) {
+                const dichotomy = getRandomDichotomy();
+                questions.push({
+                    id: startIndex + i,
+                    text: `這是【${title}】的第 ${i + 1} 題（共 ${count} 題）。這是一道進階問題，測量 [${dichotomy}] 傾向。`,
+                    options: [
+                        `選項 A: 傾向於 ${dichotomy.charAt(0)} 維度`,
+                        `選項 B: 傾向於 ${dichotomy.charAt(1)} 維度`,
+                    ],
+                    dichotomy: dichotomy
+                });
+            }
+            return questions;
+        }
+
+        const expertQuestions = generatePlaceholderQuestions(EXPERT_QUIZ_COUNT, '專家測驗', BASIC_QUIZ_COUNT + 1);
+        const customQuestions = generatePlaceholderQuestions(CUSTOM_QUIZ_COUNT, '精準 Pro', BASIC_QUIZ_COUNT + EXPERT_QUIZ_COUNT + 1);
+
+        // --- 核心功能: 真實 AdSense 廣告渲染 (已更新，可傳入 SLOT ID) ---
+        function getRealAdHtml(slotId = "1132687996") {
+            // 預設使用原始的 ID，如果沒有提供
+            const adSlotId = slotId; 
+            
+            return `
+                <div class="pt-4 mt-8 bg-gray-100 shadow-inner rounded-xl text-center">
+                    <h2 class="text-base font-bold text-gray-700 p-3 pb-2 border-b border-gray-200">
+                        ── 贊助廣告 ──
+                    </h2>
+                    <div class="w-full p-3 min-h-[100px] flex items-center justify-center">
+                        <ins class="adsbygoogle"
+                             style="display:block"
+                             data-ad-client="ca-pub-2895749032536610"
+                             data-ad-slot="${adSlotId}"  
+                             data-ad-format="auto"
+                             data-full-width-responsive="true"></ins>
+                    </div>
+                </div>
+                <script>
+                    try {
+                        // 異步推入廣告，讓 Google 載入內容
+                        (adsbygoogle = window.adsbygoogle || []).push({});
+                    } catch (e) {
+                        console.error("AdSense push failed:", e);
+                    }
+                <\/script>
+            `;
+        }
+        // -----------------------------------------------------------
+
+
+        // --- 輔助函數: 取得當前測驗的資料 ---
+        function getQuizData(quizType) {
+            if (quizType === 'basic') return { index: basicIndex, answers: basicAnswers, questions: basicQuestions, count: BASIC_QUIZ_COUNT, level: '初階報告 (較低精準度)', weight: 1.0 };
+            if (quizType === 'expert') return { index: expertIndex, answers: expertAnswers, questions: expertQuestions, count: EXPERT_QUIZ_COUNT, level: '中階報告 (中等精準度)', weight: 1.2 };
+            if (quizType === 'custom') return { index: customIndex, answers: customAnswers, questions: customQuestions, count: CUSTOM_QUIZ_COUNT, level: '最終報告 (高精準度)', weight: 1.5 };
+            return { index: 0, answers: [], questions: [], count: 0, level: 'N/A', weight: 0 };
+        }
+
+        // --- 輔助函數: 設定當前測驗的索引 ---
+        function setQuizIndex(quizType, newIndex) {
+            if (quizType === 'basic') basicIndex = newIndex;
+            else if (quizType === 'expert') expertIndex = newIndex;
+            else if (quizType === 'custom') customIndex = newIndex;
+        }
+
+        // --- 核心函數: 取得已作答題數 ---
+        function getAnsweredCount(answers) {
+            let count = 0;
+            for (const answer of answers) {
+                if (answer === 0 || answer === 1) {
+                    count++;
+                }
+            }
+            return count;
+        }
+        
+        // --- 消息框函數 ---
+        function showMessageBox(message, callback = () => {}) {
+            alert(message);
+            callback();
+        }
+
+        // -----------------------------------------------------------
+        // 🛡️ 新增功能 1: Ad-Blocker 偵測
+        // -----------------------------------------------------------
+        function checkAdBlocker() {
+            const testAd = document.getElementById('ad-test-unit');
+            
+            // 檢查元素的計算樣式。如果被 Ad Blocker 隱藏，display 會是 none 或 offsetHeight/offsetWidth 為 0
+            if (testAd && (window.getComputedStyle(testAd).getPropertyValue('display') === 'none' || testAd.offsetHeight === 0 || testAd.offsetWidth === 0)) {
+                isAdBlockerActive = true;
+                // 阻擋器啟動時的用戶提示
+                // showMessageBox("⚠️ 偵測到您啟用了廣告阻擋器！為了贊助本站內容，請先關閉阻擋器或將本站加入白名單，否則無法解鎖進階測驗。");
+                return true;
+            }
+            isAdBlockerActive = false;
+            return false;
+        }
+        // -----------------------------------------------------------
+
+
+        // --- 核心功能: 渲染分頁內容 ---
+        function renderTabContent() {
+            const tabContentDiv = document.getElementById('tab-content');
+            if (!tabContentDiv) return;
+
+            let title = '';
+            let contentHtml = '';
+            
+            let quizType;
+            if (activeTab === 'tab1') quizType = 'basic';
+            else if (activeTab === 'tab2') quizType = 'expert';
+            else if (activeTab === 'tab3') quizType = 'custom';
+            else return; 
+
+            const quizData = getQuizData(quizType);
+            const totalAnswered = getAnsweredCount(quizData.answers);
+            
+            try {
+                // 檢查測驗是否已完成
+                if (totalAnswered === quizData.count) {
+                    title = `【已完成】${quizData.level}`;
+                    contentHtml = renderResults(quizType);
+                } else if (activeTab === 'tab1') {
+                    title = `【基本測驗】 (進度: ${totalAnswered} / ${BASIC_QUIZ_COUNT})`;
+                    contentHtml = renderQuiz('basic');
+                } else if (!isExpertUnlocked && activeTab === 'tab2') {
+                    title = "【鎖定】專家測驗 (69 題)";
+                    contentHtml = renderLockedContent('專家測驗', 'tab2');
+                } else if (activeTab === 'tab2') {
+                    title = `【專家測驗】 (進度: ${totalAnswered} / ${EXPERT_QUIZ_COUNT})`;
+                    contentHtml = renderQuiz('expert');
+                } else if (!isTab3Accessible && activeTab === 'tab3') {
+                    title = `【鎖定】精準 Pro (${CUSTOM_QUIZ_COUNT} 題)`;
+                    contentHtml = renderLockedContent('精準 Pro', 'tab3');
+                } else if (activeTab === 'tab3') {
+                    title = `【精準 Pro】 (進度: ${totalAnswered} / ${CUSTOM_QUIZ_COUNT})`;
+                    contentHtml = renderQuiz('custom');
+                }
+
+                tabContentDiv.innerHTML = `
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-6 border-b-2 border-primary-light pb-2">
+                        ${title}
+                    </h1>
+                    ${contentHtml}
+                `;
+
+            } catch (e) {
+                console.error("Critical rendering error in renderTabContent:", e);
+                tabContentDiv.innerHTML = `<div class="p-8 bg-red-100 text-red-700 font-bold text-center rounded-xl border border-red-500">
+                    <p class="mb-2">⚠️ 應用程式渲染失敗。請在瀏覽器控制台 (F12) 檢查詳細錯誤。</p>
+                </div>`;
+            }
+        }
+
+
+        // --- 渲染測驗介面 ---
+        function renderQuiz(quizType) {
+            const data = getQuizData(quizType);
+            const questions = data.questions;
+            const answers = data.answers;
+            let currentQIndex = data.index;
+            const totalAnswered = getAnsweredCount(answers);
+            
+            if (currentQIndex > totalAnswered) {
+                currentQIndex = totalAnswered;
+                setQuizIndex(quizType, currentQIndex);
+            }
+            if (currentQIndex >= questions.length && totalAnswered === questions.length) {
+                return `<div class="p-8 text-center bg-green-100 rounded-xl border border-green-500 text-green-700 font-bold">所有題目均已作答。請點擊下方的「完成測驗並查看結果」按鈕。</div>`;
+            }
+            if (currentQIndex >= questions.length) {
+                currentQIndex = questions.length - 1;
+                setQuizIndex(quizType, currentQIndex);
+            }
+
+            const question = questions[currentQIndex];
+            const savedAnswerIndex = answers[currentQIndex];
+            const isAnswered = typeof savedAnswerIndex === 'number';
+            const isLastQuestion = currentQIndex === questions.length - 1;
+            const isNextDisabled = !isAnswered && (currentQIndex < questions.length);
+            const nextButtonText = isLastQuestion ? '完成測驗並查看結果' : '下一題';
+
+            return `
+                <div class="mb-8">
+                    <h3 class="text-lg sm:text-xl font-semibold text-gray-700 mb-4 leading-relaxed">
+                        <span class="text-primary-indigo font-extrabold">${currentQIndex + 1}.</span> ${question.text}
+                    </h3>
+                    <div class="space-y-4">
+                        ${question.options.map((option, index) => {
+                            const isSelected = savedAnswerIndex === index;
+                            return `
+                                <button onclick="submitAnswer('${quizType}', ${index})"
+                                    class="w-full text-left p-4 rounded-lg shadow-md transition duration-200 
+                                    ${isSelected ? 'bg-primary-indigo text-white shadow-xl scale-[1.01]' : 'bg-gray-100 hover:bg-primary-light/30 transform hover:scale-[1.02] active:scale-100'}">
+                                    <span class="font-medium ${isSelected ? 'text-white' : 'text-gray-800'}">${option}</span>
+                                    ${isSelected ? '<span class="float-right text-lg">✅</span>' : ''}
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+                
+                <div class="pt-4 border-t border-gray-200 text-sm text-gray-500 flex justify-between items-center mb-8">
+                    <span>當前題號: ${currentQIndex + 1} / ${questions.length} 題 (${totalAnswered} 題已作答)</span>
+                    <div class="flex space-x-3">
+                        <button onclick="goPrev('${quizType}')" 
+                            class="flex items-center text-primary-indigo hover:text-primary-light transition duration-150 p-2 rounded-lg 
+                            ${currentQIndex === 0 ? 'opacity-50 cursor-not-allowed bg-gray-100' : 'hover:bg-primary-indigo/10'}" 
+                            ${currentQIndex === 0 ? 'disabled' : ''}>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            上一題
+                        </button>
+                        
+                        <button onclick="goNext('${quizType}')" 
+                            class="flex items-center text-white bg-primary-indigo transition duration-150 p-2 rounded-lg 
+                            ${isNextDisabled ? 'opacity-50 cursor-not-allowed bg-gray-300 text-gray-600' : 'hover:bg-primary-light'}" 
+                            ${isNextDisabled ? 'disabled' : ''}>
+                            ${nextButtonText}
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                ${getRealAdHtml()} `; // 測驗頁面底部使用預設 ID
+        }
+        
+        // --- 處理答案提交和導航 (無修改) ---
+        function submitAnswer(quizType, answerIndex) {
+            const data = getQuizData(quizType);
+            const answers = data.answers;
+            let currentQIndex = data.index;
+
+            answers[currentQIndex] = answerIndex;
+
+            if (currentQIndex < getAnsweredCount(answers) - 1) {
+                renderTabContent();
+                return;
+            }
+
+            if (currentQIndex < data.count - 1) {
+                setQuizIndex(quizType, currentQIndex + 1);
+            } 
+            renderTabContent();
+        }
+
+        function goNext(quizType) {
+            const data = getQuizData(quizType);
+            let currentQIndex = data.index;
+            const totalAnswered = getAnsweredCount(data.answers);
+
+            if (currentQIndex < data.count - 1 && currentQIndex < totalAnswered) {
+                setQuizIndex(quizType, currentQIndex + 1);
+            } else if (currentQIndex === data.count - 1 && totalAnswered === data.count) {
+                setQuizIndex(quizType, data.count); 
+            }
+            renderTabContent();
+        }
+
+        function goPrev(quizType) {
+            const data = getQuizData(quizType);
+            let currentQIndex = data.index;
+
+            if (currentQIndex > 0) {
+                setQuizIndex(quizType, currentQIndex - 1);
+                renderTabContent();
+            }
+        }
+        
+        // -----------------------------------------------------------
+        // 修改 renderLockedContent 函數 (新增 Ad-Blocker 檢查)
+        // -----------------------------------------------------------
+        function renderLockedContent(tabName, targetTabId) {
+            const unlockTarget = targetTabId === 'tab2' ? 'expert' : 'pro';
+            const unlockText = targetTabId === 'tab2' ? '專家測驗 (69 題)' : '精準 Pro (120 題)';
+            
+            // 根據解鎖目標，指定要使用的廣告 Slot ID
+            const adSlotForUnlock = (targetTabId === 'tab2') ? '4501087360' : '5682307096';
+
+            if (isAdBlockerActive) {
+                 return `
+                    <div class="text-center p-8 bg-red-100 rounded-xl border-4 border-dashed border-red-500">
+                        <p class="text-2xl font-bold text-red-700 mb-4">
+                            🚫 廣告阻擋器偵測！
+                        </p>
+                        <p class="text-gray-700 mb-6">
+                            偵測到您啟用了去廣告軟體。為了維持本站運作，請關閉您的 Ad-Blocker 並刷新頁面，才能解鎖此進階內容。
+                        </p>
+                        <button onclick="window.location.reload()"
+                            class="px-8 py-3 bg-red-500 text-white font-extrabold rounded-full shadow-lg hover:scale-[1.05]">
+                            已關閉阻擋器，刷新頁面
+                        </button>
+                    </div>
+                    ${getRealAdHtml(adSlotForUnlock)}
+                 `;
+            }
+            
+            // 正常鎖定內容
+            return `
+                <div class="text-center p-8 bg-locked-gray/20 rounded-xl border-4 border-dashed border-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-600 mx-auto mb-4" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0" fill="none"></path>
+                        <path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"></path>
+                        <path d="M12 10l-2 2l4 4"></path>
+                    </svg>
+                    <p class="text-xl font-bold text-gray-700 mb-4">
+                        此為 ${tabName}，目前已鎖定 🔒
+                    </p>
+                    <p class="text-gray-600 mb-6">
+                        為了贊助系統的運作，請點擊下方按鈕以觀看廣告（模擬），即可立即解鎖此進階測驗！
+                    </p>
+                    <button onclick="startUnlockProcess('${unlockTarget}', this)"
+                        class="px-8 py-3 bg-ad-orange text-white font-extrabold rounded-full shadow-lg shadow-ad-orange/50 
+                        transition duration-300 transform hover:scale-[1.05] active:scale-100 flex items-center justify-center mx-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0" fill="none"></path>
+                            <path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path>
+                            <path d="M21 21l-6 -6"></path>
+                        </svg>
+                        點擊廣告立即解鎖 ${unlockText}
+                    </button>
+                </div>
+                ${getRealAdHtml(adSlotForUnlock)} 
+            `;
+        }
+
+        // -----------------------------------------------------------
+        // 🛡️ 新增功能 2: 處理解鎖前的延遲 (模擬廣告觀看)
+        // -----------------------------------------------------------
+        function startUnlockProcess(target, buttonElement) {
+            if (isAdBlockerActive) {
+                showMessageBox("⚠️ 請先關閉廣告阻擋器，否則無法進行解鎖。");
+                return;
+            }
+
+            // 設置防作弊的時間戳和目標
+            pendingUnlockTarget = target;
+            pendingUnlockTimestamp = Date.now();
+            
+            // 禁用按鈕並顯示載入狀態
+            buttonElement.disabled = true;
+            buttonElement.innerHTML = '正在載入廣告，請稍候... (3 秒)';
+            buttonElement.classList.add('bg-gray-400');
+            buttonElement.classList.remove('bg-ad-orange', 'shadow-ad-orange/50');
+
+
+            // 模擬廣告觀看延遲
+            setTimeout(() => {
+                // 執行真正的解鎖邏輯 (帶有防作弊檢查)
+                unlockTab(target);
+                
+                // 無論成功與否，重置按鈕狀態 (如果元素還存在的話)
+                if (document.querySelector(`.unlock-btn-${target}`)) {
+                    const unlockText = (target === 'expert') ? '專家測驗 (69 題)' : '精準 Pro (120 題)';
+                    buttonElement.disabled = false;
+                    buttonElement.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0" fill="none"></path><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path></svg>點擊廣告立即解鎖 ${unlockText}`;
+                    buttonElement.classList.add('bg-ad-orange', 'shadow-ad-orange/50');
+                    buttonElement.classList.remove('bg-gray-400');
+                }
+
+            }, UNLOCK_DELAY_MS);
+
+        }
+
+        // -----------------------------------------------------------
+        // 🛡️ 修改核心功能: 廣告解鎖邏輯 (增加 Anti-Cheat 檢查)
+        // -----------------------------------------------------------
+        function unlockTab(target) {
+            
+            // Anti-Cheat 檢查: 確保呼叫是透過 startUnlockProcess 延遲後觸發
+            const timeElapsed = Date.now() - pendingUnlockTimestamp;
+            
+            if (target !== pendingUnlockTarget || timeElapsed < UNLOCK_DELAY_MS - 500) {
+                // 只有在還未解鎖時才進行提示
+                if ( (target === 'expert' && !isExpertUnlocked) || (target === 'pro' && !isTab3Accessible) ) {
+                    console.warn(`Anti-Cheat Warning: Unlock attempt for ${target} failed. Elapsed time: ${timeElapsed}ms.`);
+                    showMessageBox("偵測到異常操作。請通過頁面上的按鈕正常解鎖（模擬觀看廣告），不要直接操作控制台。");
+                }
+                
+                // 清除狀態
+                pendingUnlockTarget = null;
+                pendingUnlockTimestamp = 0;
+                return; 
+            }
+
+            // -------------------------------------
+            // 以下是原來的正常解鎖邏輯 
+            // -------------------------------------
+            let message = '';
+            let targetTabId = '';
+            
+            if (target === 'expert' && !isExpertUnlocked) {
+                isExpertUnlocked = true;
+                message = "感謝您的支持！專家測驗已成功解鎖 🔓。點擊確認後將自動切換。";
+                targetTabId = 'tab2';
+            } else if (target === 'pro' && !isTab3Accessible) {
+                isTab3Accessible = true;
+                message = "贊助廣告已觀看完畢！精準 Pro 測驗已成功解鎖 🔓。點擊確認後將自動切換。";
+                targetTabId = 'tab3';
+            } else {
+                message = "此測驗已經解鎖過了。";
+                targetTabId = (target === 'expert' ? 'tab2' : 'tab3');
+            }
+
+            // 清除狀態
+            pendingUnlockTarget = null;
+            pendingUnlockTimestamp = 0;
+
+            showMessageBox(message, () => {
+                setActiveTab(targetTabId);
+            });
+        }
+        // -----------------------------------------------------------
+        
+        // --- MBTI 結果計算和渲染 (無修改) ---
+        const resultDescriptions = {
+            'ISTJ': { title: '物流師 (Logistician)', desc: '務實、事實為中心，可靠性無與倫比。他們是傳統的守護者，重視結構和秩序。', color: 'text-primary-indigo' },
+            'ISFJ': { title: '守衛者 (Defender)', desc: '非常忠誠和體貼，隨時準備保護所愛的人。他們是謙遜且勤奮的助人者，將服務他人視為自己的使命。', color: 'text-accent-green' },
+            'INFJ': { title: '提倡者 (Advocate)', desc: '安靜而神秘，但鼓舞人心且不懈的理想主義者。他們擁有強烈的道德感和遠見。', color: 'text-purple-600' },
+            'INTJ': { title: '建築師 (Architect)', desc: '富有想像力和戰略思想，對一切都有一個計劃。他們是知識的追求者，高度獨立。', color: 'text-red-500' },
+            'ISTP': { title: '探險家 (Virtuoso)', desc: '大膽而務實的實驗者，擅長使用工具和親手解決問題。他們喜歡自由和即時的行動。', color: 'text-blue-500' },
+            'ISFP': { title: '藝術家 (Adventurer)', desc: '靈活、迷人的藝術家，隨時準備探索和體驗新事物。他們活在當下，重視美感。', color: 'text-pink-500' },
+            'INFP': { title: '調停者 (Mediator)', desc: '詩意、善良且無私的利他主義者，總是熱衷於助人。他們由核心價值觀和好奇心驅動。', color: 'text-teal-500' },
+            'INTP': { title: '邏輯學家 (Logician)', desc: '創新者，對知識有著永不滿足的渴望。他們擅長分析和抽象思維，享受純粹的智力探索。', color: 'text-yellow-700' },
+            'ESTP': { title: '企業家 (Entrepreneur)', desc: '聰明、精力充沛，真正享受活在邊緣。他們是社交的實幹家，專注於當前的結果。', color: 'text-orange-600' },
+            'ESFP': { title: '表演者 (Entertainer)', desc: '自發性、精力充沛且熱情洋溢的生活家，當他們在場時，世界不會沉悶。他們喜歡成為焦點。', color: 'text-lime-600' },
+            'ENFP': { title: '競選者 (Campaigner)', desc: '熱情、富有創意和社交能力，永遠能找到微笑的理由。他們充滿活力，尋求與他人的深刻連結。', color: 'text-indigo-600' },
+            'ENTP': { title: '辯論家 (Debater)', desc: '聰明且好奇的思想家，總是忍不住對現狀提出質疑。他們喜歡智力挑戰和腦力激盪。', color: 'text-cyan-600' },
+            'ESTJ': { title: '總經理 (Executive)', desc: '優秀的管理者，擅長管理事務或人員。他們是傳統的實施者，重視效率和責任。', color: 'text-green-700' },
+            'ESFJ': { title: '執政官 (Consul)', desc: '非常關心他人，善於社交，熱衷於幫助。他們是團隊的基石，重視社會規範。', color: 'text-fuchsia-600' },
+            'ENFJ': { title: '主人公 (Protagonist)', desc: '魅力十足、鼓舞人心的領導者，能夠激發聽眾。他們富有激情，致力於實現積極的改變。', color: 'text-rose-600' },
+            'ENTJ': { title: '指揮官 (Commander)', desc: '大膽、富有想像力且意志堅定的領導者，他們總能找到方法達成目標。他們是天生的決策者。', color: 'text-amber-600' }
+        };
+
+        function calculateMBTIType(quizType) {
+            const data = getQuizData(quizType);
+            const answers = data.answers;
+            const weight = data.weight; 
+            
+            const totalAnswered = getAnsweredCount(answers);
+
+            if (totalAnswered === 0) return null;
+
+            const scores = { 'E': 0, 'I': 0, 'S': 0, 'N': 0, 'T': 0, 'F': 0, 'J': 0, 'P': 0 };
+
+            data.questions.forEach((question, questionIndex) => {
+                const answerIndex = answers[questionIndex];
+                if (answerIndex === 0 || answerIndex === 1) {
+                    const dichotomy = question.dichotomy;
+                    const char1 = dichotomy.charAt(0);
+                    const char2 = dichotomy.charAt(1);
+                    
+                    if (answerIndex === 0) scores[char1] += 1 * weight;
+                    else if (answerIndex === 1) scores[char2] += 1 * weight;
+                }
+            });
+
+            let resultType = '';
+            resultType += (scores['E'] >= scores['I']) ? 'E' : 'I';
+            resultType += (scores['S'] >= scores['N']) ? 'S' : 'N';
+            resultType += (scores['T'] >= scores['F']) ? 'T' : 'F';
+            resultType += (scores['J'] >= scores['P']) ? 'J' : 'P';
+
+            return {
+                type: resultType,
+                details: {
+                    'E_score': scores['E'], 'I_score': scores['I'],
+                    'S_score': scores['S'], 'N_score': scores['N'],
+                    'T_score': scores['T'], 'F_score': scores['F'],
+                    'J_score': scores['J'], 'P_score': scores['P'],
+                    totalQuestions: totalAnswered,
+                    totalPossible: data.count,
+                    level: data.level
+                }
+            };
+        }
+
+        function shareResults(mbtiType, level) {
+            const shareText = `我在【${level}】MBTI 測驗中測出的結果是：${mbtiType} (${resultDescriptions[mbtiType].title})！\n\n快來測測你的類型吧！\n${window.location.href}`;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: `MBTI ${level} 測驗結果`,
+                    text: shareText,
+                    url: window.location.href
+                })
+                .then(() => showMessageBox('分享成功！', () => {}))
+                .catch((error) => console.error('Error sharing:', error));
+            } else {
+                navigator.clipboard.writeText(shareText)
+                    .then(() => {
+                        showMessageBox(`內容已複製到剪貼簿：\n\n${shareText}`, () => {});
+                    })
+                    .catch(err => {
+                        console.error('Could not copy text: ', err);
+                        showMessageBox("您的瀏覽器不支援自動複製。請手動複製以下內容進行分享：\n\n" + shareText, () => {});
+                    });
+            }
+        }
+
+        function getDichotomyBar(score1, score2, char1, char2) {
+            const total = score1 + score2;
+            const percent1 = total > 0 ? Math.round((score1 / total) * 100) : 50;
+            const percent2 = 100 - percent1;
+            const primaryColor = 'bg-primary-indigo';
+            const secondaryColor = 'bg-gray-300';
+
+            return `
+                <div class="mb-4">
+                    <div class="flex justify-between font-bold text-sm mb-1">
+                        <span class="${score1 >= score2 ? 'text-primary-indigo' : 'text-gray-500'}">${char1} (${percent1}%)</span>
+                        <span class="${score2 > score1 ? 'text-primary-indigo' : 'text-gray-500'}">${char2} (${percent2}%)</span>
+                    </div>
+                    <div class="flex h-3 rounded-full overflow-hidden shadow-inner">
+                        <div class="${primaryColor} h-full transition-all duration-500 ease-out" style="width: ${percent1}%"></div>
+                        <div class="${secondaryColor} h-full transition-all duration-500 ease-out" style="width: ${percent2}%"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // -----------------------------------------------------------
+        // 修改 renderResults 函數 (確保解鎖按鈕的 onclick 使用 startUnlockProcess)
+        // -----------------------------------------------------------
+        function renderResults(quizType) {
+            const result = calculateMBTIType(quizType);
+            const data = getQuizData(quizType);
+            
+            if (!result || result.details.totalQuestions !== data.count) {
+                 return `<div class="p-8 text-center bg-yellow-100 rounded-xl border border-yellow-500 text-yellow-700 font-bold">錯誤：請先完成所有 ${data.count} 題測驗，才能查看完整的報告。</div>`;
+            }
+
+            const finalType = result.type;
+            const details = result.details;
+            const currentResult = resultDescriptions[finalType];
+            
+            let nextAction;
+            let finalAdSlot = '1132687996'; // 預設的通用廣告 ID
+            
+            if (quizType === 'basic' && !isExpertUnlocked) {
+                // 基本測驗結果頁面，促使用戶解鎖專家測驗 (使用新 ID 4501087360)
+                finalAdSlot = '4501087360';
+                nextAction = `<button onclick="startUnlockProcess('expert', this)" class="unlock-btn-expert w-full py-3 bg-ad-orange text-white font-extrabold rounded-full shadow-lg hover:scale-[1.02] mt-4">點擊廣告，解鎖下一階段：專家測驗</button>`;
+            } else if (quizType === 'expert' && !isTab3Accessible) {
+                // 專家測驗結果頁面，促使用戶解鎖 Pro 測驗 (使用新 ID 5682307096)
+                finalAdSlot = '5682307096';
+                nextAction = `<button onclick="startUnlockProcess('pro', this)" class="unlock-btn-pro w-full py-3 bg-ad-orange text-white font-extrabold rounded-full shadow-lg hover:scale-[1.02] mt-4">點擊廣告，解鎖最終階段：精準 Pro</button>`;
+            } else {
+                nextAction = `<div class="p-4 bg-accent-green/20 text-accent-green font-bold text-center rounded-lg mt-4">恭喜！您已完成所有測驗，這是最高精準度報告。</div>`;
+            }
+
+            const restartButton = `<button onclick="setQuizIndex('${quizType}', 0); renderTabContent();" class="mt-4 text-primary-indigo hover:text-primary-light text-sm font-semibold underline">重新查看/作答</button>`;
+            
+            const shareButton = `
+                <button onclick="shareResults('${finalType}', '${details.level}')"
+                    class="w-full py-3 mt-4 mb-2 bg-accent-green text-white font-extrabold rounded-full shadow-lg hover:scale-[1.02] transition duration-200 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0" fill="none"></path>
+                        <path d="M6 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+                        <path d="M18 6m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+                        <path d="M18 18m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+                        <path d="M8.7 10.7l6.6 -3.4"></path>
+                        <path d="M8.7 13.3l6.6 3.4"></path>
+                    </svg>
+                    分享我的 ${details.level} 測驗結果
+                </button>
+            `;
+
+
+            return `
+                <div class="p-4 sm:p-6 bg-accent-green/10 rounded-xl border-4 border-accent-green mb-8 shadow-2xl">
+                    <h2 class="text-3xl sm:text-4xl font-extrabold text-accent-green mb-6 border-b-2 border-accent-green pb-3 text-center">
+                        【${details.level}】MBTI 人格總結報告
+                    </h2>
+                    
+                    <div class="text-center my-6 bg-white p-6 rounded-lg shadow-xl">
+                        <p class="text-xl font-bold text-gray-700 mb-2">您當前的綜合類型是：</p>
+                        <h3 class="text-7xl font-extrabold ${currentResult.color} mb-4">${finalType}</h3>
+                        <p class="text-3xl font-semibold text-gray-800">${currentResult.title}</p>
+                    </div>
+                    
+                    
+                    <h4 class="text-2xl font-bold text-gray-700 mb-4 mt-8 border-b pb-2">【性格核心描述】</h4>
+                    <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-primary-indigo mb-6">
+                        <p class="text-gray-600 leading-relaxed text-lg font-medium">
+                            ${currentResult.desc}
+                        </p>
+                    </div>
+
+                    <h4 class="text-2xl font-bold text-gray-700 mb-4 mt-8 border-b pb-2">【四大維度傾向分析】</h4>
+                    
+                    <div class="bg-white p-4 rounded-lg shadow-md">
+                        ${getDichotomyBar(details.E_score, details.I_score, 'E (外向)', 'I (內向)')}
+                        ${getDichotomyBar(details.S_score, details.N_score, 'S (實感)', 'N (直覺)')}
+                        ${getDichotomyBar(details.T_score, details.F_score, 'T (思考)', 'F (情感)')}
+                        ${getDichotomyBar(details.J_score, details.P_score, 'J (判斷)', 'P (感知)')}
+                    </div>
+                    
+                    <p class="text-xs text-gray-400 mt-6 text-center">此報告基於您已完成的 ${details.totalQuestions} 題測驗。${restartButton}</p>
+                    
+                    ${shareButton}
+                    ${nextAction}
+
+                </div>
+                ${getRealAdHtml(finalAdSlot)} `; 
+        }
+
+        // --- 核心導航和狀態管理 (無修改) ---
+        function setActiveTab(tabId) {
+            let targetTab = tabId;
+
+            if (tabId === 'tab2' && !isExpertUnlocked) {
+                targetTab = 'tab2';
+            } else if (tabId === 'tab3' && !isTab3Accessible) {
+                targetTab = 'tab3';
+            }
+            
+            activeTab = targetTab;
+
+            let quizType;
+            if (activeTab === 'tab1') quizType = 'basic';
+            else if (activeTab === 'tab2') quizType = 'expert';
+            else if (activeTab === 'tab3') quizType = 'custom';
+            else return; 
+
+            const quizData = getQuizData(quizType);
+            const totalAnswered = getAnsweredCount(quizData.answers);
+            
+            setQuizIndex(quizType, totalAnswered);
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-primary-indigo', 'text-white');
+                btn.classList.add('text-gray-500', 'hover:bg-primary-light/20');
+            });
+
+            const currentBtn = document.getElementById(activeTab);
+            if (currentBtn) {
+                currentBtn.classList.add('bg-primary-indigo', 'text-white');
+                currentBtn.classList.remove('text-gray-500', 'hover:bg-primary-light/20');
+            }
+
+            renderTabContent();
+        }
+        
+        // --- 頁面啟動初始化 (新增 Ad-Blocker 檢查) ---
+        document.addEventListener('DOMContentLoaded', (event) => {
+            // 由於 Ad-Blocker 偵測需要時間，先執行它，但不立即中斷流程
+            checkAdBlocker(); 
+            setActiveTab('tab1');
+            
+            // 如果偵測到 Ad-Blocker，在載入完成後給予警告 (如果用戶嘗試進入鎖定頁面，renderLockedContent會再次阻止)
+            if (isAdBlockerActive) {
+                 showMessageBox("⚠️ 提醒：偵測到您可能啟用了廣告阻擋器。這將阻止您解鎖進階測驗內容。請考慮關閉。");
+            }
+        });
+
+    </script>
+</body>
+</html>
