@@ -75,18 +75,6 @@
         }
         .btn-unlock:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(249, 115, 22, 0.3); }
         
-        /* 分享按鈕樣式 */
-        .btn-share {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            transition: all 0.3s;
-            font-size: 0.9rem;
-        }
-        .btn-share:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); }
-        
         /* 廣告容器 */
         .ad-container {
             width: 100%;
@@ -101,41 +89,27 @@
             margin: 1rem 0;
         }
         
-        /* 結果頁面優化 */
-        .result-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1rem;
-            margin: 1rem 0;
-        }
-        
-        .result-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            border: 1px solid #e5e7eb;
-        }
-        
-        /* 確保廣告可見 */
-        .main-content {
-            max-height: calc(100vh - 400px);
-            overflow-y: auto;
-        }
-        
-        /* 窄版佈局 */
-        .narrow-layout {
-            max-width: 900px !important;
-            margin: 0 auto !important;
+        /* 免責聲明 */
+        .ad-disclaimer {
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-align: center;
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: #f3f4f6;
+            border-radius: 0.5rem;
         }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-    <div class="narrow-layout max-w-4xl mx-auto p-3 md:p-4">
+    <div class="max-w-4xl mx-auto p-3 md:p-4">
         <!-- 標題 -->
         <header class="text-center mb-6 mt-2">
             <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">🎭 MBTI 人格測驗系統</h1>
-            <p class="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">探索真實自我，免費測試16型人格，贊助廣告解鎖進階分析</p>
+            <p class="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">探索真實自我，免費測試16型人格</p>
+            <div class="ad-disclaimer mt-2">
+                本網站使用廣告支持免費服務，部分功能需第三方互動解鎖
+            </div>
         </header>
         
         <!-- 主卡片 -->
@@ -154,17 +128,20 @@
             </div>
             
             <!-- 內容區 -->
-            <div id="content-area" class="p-3 md:p-6 min-h-[400px] main-content">
+            <div id="content-area" class="p-3 md:p-6 min-h-[400px]">
                 正在載入...
             </div>
         </div>
         
-        <!-- 底部廣告（手機優化） -->
+        <!-- Google AdSense 廣告區 -->
         <div class="mt-4">
-            <div class="mobile-ad ad-container">
-                <div id="bottom-ad">
+            <div class="ad-container">
+                <div id="google-ad">
                     <!-- Google AdSense 廣告載入區 -->
                 </div>
+            </div>
+            <div class="ad-disclaimer">
+                Google 提供的廣告內容，與本網站無關
             </div>
         </div>
     </div>
@@ -215,121 +192,10 @@ const BASIC_QUESTIONS = [
     { id: 16, text: "您將生活視為？", options: ["需要被控制、組織和做出結論的結構 (J)", "需要被體驗、探索和保持開放的過程 (P)"], dichotomy: 'JP' },
 ];
 
-// 生成專家測驗 69題
+// ==================== 專家測驗 69題 ====================
 const EXPERT_QUESTIONS = generateExpertQuestions();
 
-// 生成 PRO 120題完整題庫
-const PRO_QUESTIONS = generateProQuestions();
-
 function generateExpertQuestions() {
-    const questions = [];
-    const categories = {
-        EI: [
-            {q: "當您參加派對或社交活動時，您通常：", o1: "主動與陌生人交談，認識新朋友 (E)", o2: "與熟悉的朋友交談或安靜觀察 (I)"},
-            {q: "當您有新的想法時，您傾向：", o1: "立即與他人分享並討論 (E)", o2: "先獨自思考和完善 (I)"},
-            {q: "在團隊工作中，您更喜歡：", o1: "頻繁的會議和腦力激盪 (E)", o2: "獨立工作後整合成果 (I)"},
-            {q: "當您感到壓力時，您通常：", o1: "找人傾訴或參與活動分散注意力 (E)", o2: "需要獨處時間來整理思緒 (I)"},
-            {q: "您的思考過程通常是：", o1: "邊說邊思考，通過對話釐清思路 (E)", o2: "完全想清楚後再表達 (I)"},
-            {q: "週末您更傾向於：", o1: "安排社交活動或戶外活動 (E)", o2: "享受個人時間和愛好 (I)"},
-            {q: "在學習新技能時，您偏好：", o1: "小組學習或找教練指導 (E)", o2: "自學或線上課程 (I)"},
-            {q: "當您需要做出重要決定時，您：", o1: "諮詢多人的意見 (E)", o2: "依賴自己的分析和直覺 (I)"},
-            {q: "您認為自己的能量主要來自：", o1: "與他人互動 (E)", o2: "獨處時的反思 (I)"},
-            {q: "在會議中，您通常：", o1: "積極發言，主導討論 (E)", o2: "先聆聽，必要時才發言 (I)"},
-            {q: "您如何處理衝突？", o1: "直接面對並立即解決 (E)", o2: "需要時間思考後再回應 (I)"},
-            {q: "您更喜歡的工作環境是：", o1: "開放式辦公室，方便交流 (E)", o2: "私人辦公室或安靜空間 (I)"},
-            {q: "當您有成就時，您希望：", o1: "與大家分享慶祝 (E)", o2: "私下享受成就感 (I)"},
-            {q: "您的朋友圈通常是：", o1: "廣泛而多樣 (E)", o2: "小而深入 (I)"},
-            {q: "您認為自己更擅長：", o1: "口頭表達和即興演講 (E)", o2: "書面表達和深思熟慮 (I)"},
-            {q: "在陌生環境中，您通常：", o1: "快速適應並主動探索 (E)", o2: "先觀察了解再行動 (I)"},
-            {q: "當您遇到問題時，您傾向：", o1: "立即尋求幫助或討論 (E)", o2: "先嘗試自己解決 (I)"}
-        ],
-        SN: [
-            {q: "您更相信：", o1: "親身經歷和具體事實 (S)", o2: "直覺和可能性 (N)"},
-            {q: "在解決問題時，您更注重：", o1: "實際步驟和可行性 (S)", o2: "創新方法和遠見 (N)"},
-            {q: "您認為自己更擅長：", o1: "執行具體任務 (S)", o2: "產生新想法 (N)"},
-            {q: "您更喜歡閱讀：", o1: "實用指南和傳記 (S)", o2: "科幻小說和哲學書籍 (N)"},
-            {q: "在旅行時，您更重視：", o1: "具體的行程和景點 (S)", o2: "整體體驗和感受 (N)"},
-            {q: "您更傾向於記住：", o1: "具體的細節和事實 (S)", o2: "整體的概念和模式 (N)"},
-            {q: "當學習新事物時，您偏好：", o1: "按部就班的指導 (S)", o2: "理解背後的原理 (N)"},
-            {q: "您更擅長處理：", o1: "當下具體的問題 (S)", o2: "未來的可能性 (N)"},
-            {q: "您認為自己更：", o1: "務實和現實 (S)", o2: "富有想像力和創意 (N)"},
-            {q: "在工作中，您更注重：", o1: "具體的成果和數據 (S)", o2: "整體的願景和意義 (N)"},
-            {q: "您更喜歡的娛樂是：", o1: "體育活動或手工藝 (S)", o2: "幻想遊戲或藝術創作 (N)"},
-            {q: "您更信任：", o1: "經驗證明的方法 (S)", o2: "創新的方法 (N)"},
-            {q: "您更擅長：", o1: "處理實際的細節 (S)", o2: "看到大局 (N)"},
-            {q: "您認為自己更傾向於：", o1: "傳統和已知的方法 (S)", o2: "創新和未知的探索 (N)"},
-            {q: "在購物時，您更注重：", o1: "產品的實用性和品質 (S)", o2: "產品的設計和理念 (N)"},
-            {q: "您更喜歡的溝通方式是：", o1: "直接和具體的說明 (S)", o2: "隱喻和象徵性的表達 (N)"},
-            {q: "您認為時間更應該用於：", o1: "完成具體任務 (S)", o2: "探索新的可能性 (N)"}
-        ],
-        TF: [
-            {q: "在做決定時，您更重視：", o1: "邏輯和客觀事實 (T)", o2: "價值觀和他人感受 (F)"},
-            {q: "您認為批評應該：", o1: "直接指出問題所在 (T)", o2: "以委婉的方式表達 (F)"},
-            {q: "在評價他人時，您更看重：", o1: "能力和效率 (T)", o2: "動機和努力 (F)"},
-            {q: "面對衝突時，您更傾向：", o1: "堅持原則和真理 (T)", o2: "維護關係和諧 (F)"},
-            {q: "您認為更好的決策基於：", o1: "客觀分析 (T)", o2: "同理心 (F)"},
-            {q: "您更欣賞：", o1: "智慧和專業知識 (T)", o2: "善良和同情心 (F)"},
-            {q: "在團隊中，您更注重：", o1: "任務的完成 (T)", o2: "團隊的氣氛 (F)"},
-            {q: "您認為公平意味著：", o1: "對每個人都一視同仁 (T)", o2: "考慮每個人的特殊情況 (F)"},
-            {q: "在給予回饋時，您更傾向：", o1: "誠實但可能傷人 (T)", o2: "溫和但可能不夠直接 (F)"},
-            {q: "您更願意被描述為：", o1: "公正和理性 (T)", o2: "關懷和體貼 (F)"},
-            {q: "在解決問題時，您更注重：", o1: "問題本身 (T)", o2: "人的因素 (F)"},
-            {q: "您更傾向於：", o1: "分析情況 (T)", o2: "理解感受 (F)"},
-            {q: "您認為更好的領導者是：", o1: "果斷和有效率 (T)", o2: "支持和激勵人心 (F)"},
-            {q: "在學習時，您更重視：", o1: "理論的正確性 (T)", o2: "理論的人文價值 (F)"},
-            {q: "您更擅長：", o1: "分析數據 (T)", o2: "理解情緒 (F)"},
-            {q: "您認為成功更取決於：", o1: "能力和策略 (T)", o2: "人際關係和合作 (F)"},
-            {q: "您更傾向於相信：", o1: "客觀證據 (T)", o2: "個人直覺和價值觀 (F)"}
-        ],
-        JP: [
-            {q: "您更喜歡：", o1: "有計劃的生活 (J)", o2: "隨性的生活 (P)"},
-            {q: "面對截止日期，您通常：", o1: "提前完成 (J)", o2: "最後一刻完成 (P)"},
-            {q: "您的工作空間通常是：", o1: "整潔有序 (J)", o2: "創意混亂 (P)"},
-            {q: "在做決定時，您傾向：", o1: "快速決定 (J)", o2: "保持選項開放 (P)"},
-            {q: "您更喜歡：", o1: "完成任務 (J)", o2: "開始新任務 (P)"},
-            {q: "您認為自己更：", o1: "有組織和條理 (J)", o2: "靈活和適應性強 (P)"},
-            {q: "在旅行前，您通常：", o1: "詳細規劃 (J)", o2: "大致規劃 (P)"},
-            {q: "您更享受：", o1: "完成項目的滿足感 (J)", o2: "探索過程的樂趣 (P)"},
-            {q: "面對變化時，您通常：", o1: "感到不安 (J)", o2: "感到興奮 (P)"},
-            {q: "您更傾向於：", o1: "做出決定並堅持 (J)", o2: "保留改變的權利 (P)"},
-            {q: "您認為時間管理應該：", o1: "嚴格遵守計劃 (J)", o2: "根據情況調整 (P)"},
-            {q: "您更喜歡：", o1: "明確的指示 (J)", o2: "自由發揮的空間 (P)"},
-            {q: "在購物時，您通常：", o1: "知道自己要什麼 (J)", o2: "瀏覽後決定 (P)"},
-            {q: "您認為自己更擅長：", o1: "執行計劃 (J)", o2: "應對突發情況 (P)"},
-            {q: "您更傾向於：", o1: "結束討論做出決定 (J)", o2: "繼續討論探索可能性 (P)"},
-            {q: "您更喜歡的工作方式是：", o1: "按部就班 (J)", o2: "即興發揮 (P)"},
-            {q: "您認為生活應該：", o1: "有明確的目標和計劃 (J)", o2: "隨遇而安 (P)"}
-        ]
-    };
-
-    let questionId = 1;
-    
-    // 每個維度生成17題，共68題，再加一題綜合題
-    Object.keys(categories).forEach((dichotomy) => {
-        const dimQuestions = categories[dichotomy];
-        for (let i = 0; i < 17; i++) {
-            const q = dimQuestions[i % dimQuestions.length];
-            questions.push({
-                id: questionId++,
-                text: q.q,
-                options: [q.o1, q.o2],
-                dichotomy: dichotomy
-            });
-        }
-    });
-    
-    // 加一題綜合題
-    questions.push({
-        id: questionId,
-        text: "整體而言，您認為自己更傾向於：",
-        options: ["結構化、有組織的生活方式", "靈活、開放的生活方式"],
-        dichotomy: 'JP'
-    });
-    
-    return questions;
-}
-
-function generateProQuestions() {
     const questions = [];
     const categories = {
         EI: [
@@ -340,7 +206,8 @@ function generateProQuestions() {
             "新環境適應", "專注力來源", "情感表達", "資訊處理",
             "計畫執行", "風險承受", "人際邊界", "自我認同",
             "價值觀展現", "成就感來源", "休息方式", "問題解決",
-            "學習動機", "成長方向"
+            "學習動機", "成長方向", "工作環境偏好", "溝通頻率",
+            "創意觸發", "情緒管理", "決策速度", "合作方式"
         ],
         SN: [
             "現實感知", "未來想像", "細節關注", "模式識別",
@@ -350,7 +217,8 @@ function generateProQuestions() {
             "傳統價值", "創新思維", "實用主義", "理想主義",
             "當下專注", "長遠規劃", "感官體驗", "直覺判斷",
             "數據分析", "趨勢預測", "步驟執行", "整體理解",
-            "現實限制", "潛能開發"
+            "現實限制", "潛能開發", "資訊處理", "學習方法",
+            "問題分析", "決策依據", "工作方式", "創意表達"
         ],
         TF: [
             "決策基礎", "價值判斷", "問題分析", "情感考量",
@@ -360,7 +228,8 @@ function generateProQuestions() {
             "目標導向", "過程重視", "理性分析", "感性理解",
             "規則遵守", "例外考慮", "競爭意識", "合作精神",
             "獨立判斷", "群體共識", "成果評估", "情感價值",
-            "責任承擔", "關懷表達"
+            "責任承擔", "關懷表達", "衝突解決", "溝通風格",
+            "團隊管理", "績效評估", "動機激發", "人際互動"
         ],
         JP: [
             "生活結構", "靈活性", "時間管理", "自發性",
@@ -370,29 +239,131 @@ function generateProQuestions() {
             "完成導向", "探索導向", "系統建立", "體驗追求",
             "責任承擔", "壓力反應", "工作方式", "休閒方式",
             "資訊收集", "結論形成", "專案管理", "創意過程",
-            "學習結構", "成長路徑"
+            "學習結構", "成長路徑", "空間管理", "優先排序",
+            "習慣養成", "應變能力", "結果導向", "過程享受"
+        ]
+    };
+
+    let questionId = 1;
+    
+    // 每個維度生成17題，共68題
+    Object.keys(categories).forEach((dichotomy) => {
+        const dimCategories = categories[dichotomy];
+        for (let i = 0; i < 17; i++) {
+            const category = dimCategories[i % dimCategories.length];
+            questions.push({
+                id: questionId++,
+                text: `關於${category}，您通常會：`,
+                options: [
+                    getExpertOption(dichotomy, 0, category),
+                    getExpertOption(dichotomy, 1, category)
+                ],
+                dichotomy: dichotomy
+            });
+        }
+    });
+    
+    // 加一題綜合題
+    questions.push({
+        id: questionId,
+        text: "整體而言，您認為自己更傾向於哪種生活方式？",
+        options: ["結構化、有組織、可預測的生活", "靈活、開放、充滿可能性的生活"],
+        dichotomy: 'JP'
+    });
+    
+    return questions;
+}
+
+function getExpertOption(dichotomy, optionIndex, category) {
+    const optionTexts = {
+        'EI': [
+            '傾向於與他人互動，從外部世界獲得能量',
+            '傾向於獨處反思，從內心世界獲得能量'
+        ],
+        'SN': [
+            '專注於具體事實和實際經驗',
+            '關注抽象概念和未來可能性'
+        ],
+        'TF': [
+            '基於邏輯分析和客觀事實做決定',
+            '考慮情感影響和個人價值觀做決定'
+        ],
+        'JP': [
+            '喜歡有計劃、有結構的生活方式',
+            '偏好靈活、開放的生活方式'
+        ]
+    };
+    
+    return optionTexts[dichotomy][optionIndex];
+}
+
+// ==================== Pro測驗 120題 ====================
+const PRO_QUESTIONS = generateProQuestions();
+
+function generateProQuestions() {
+    const questions = [];
+    const detailedCategories = {
+        EI: [
+            "能量獲取方式", "社交互動偏好", "注意力方向", "思考表達方式",
+            "休息恢復模式", "學習最佳環境", "壓力釋放途徑", "創意激發方式",
+            "決策參與程度", "團隊合作風格", "溝通頻率偏好", "情感表達模式",
+            "自我反思習慣", "新環境適應力", "衝突處理方式", "領導風格傾向",
+            "資訊吸收方式", "問題解決途徑", "成就感來源", "工作環境需求",
+            "時間分配偏好", "人際互動深度", "風險承受態度", "變化適應能力",
+            "獨立工作能力", "群體活動參與", "深度思考模式", "即時反應能力",
+            "長期規劃能力", "短期執行偏好"
+        ],
+        SN: [
+            "現實感知方式", "未來規劃能力", "細節處理傾向", "整體理解模式",
+            "記憶特點", "學習方法偏好", "問題分析角度", "創意思維方式",
+            "資訊篩選標準", "模式識別能力", "經驗應用程度", "理論探索興趣",
+            "實際操作能力", "抽象思考能力", "觀察敏銳度", "洞察力深度",
+            "傳統價值觀", "創新接受度", "實用主義程度", "理想主義傾向",
+            "當下專注力", "長期展望能力", "感官體驗偏好", "直覺運用頻率",
+            "數據分析能力", "趨勢預測信心", "步驟執行嚴謹度", "整體把握能力",
+            "現實評估準確度", "潛力發掘能力"
+        ],
+        TF: [
+            "決策依據標準", "價值觀核心", "問題解決邏輯", "情感考量程度",
+            "公平性定義", "同理心表現", "理性分析能力", "和諧維護需求",
+            "客觀評價標準", "主觀感受影響", "原則堅持程度", "關係重視程度",
+            "效率優先等級", "人情考量因素", "批判思維能力", "支持態度展現",
+            "目標導向強度", "過程享受程度", "邏輯推理能力", "情感理解深度",
+            "規則遵守程度", "例外處理能力", "競爭意識強度", "合作精神表現",
+            "獨立判斷信心", "群體協調能力", "成果評估標準", "情感價值權衡",
+            "責任承擔意願", "關懷表達方式"
+        ],
+        JP: [
+            "生活結構化程度", "靈活性表現", "時間管理風格", "自發性傾向",
+            "組織能力水平", "適應變化能力", "計畫制定習慣", "即興發揮信心",
+            "目標設定明確度", "機會把握能力", "規律性需求", "變化應對方式",
+            "決策速度偏好", "選擇開放程度", "控制需求強度", "自由追求程度",
+            "完成導向程度", "探索樂趣享受", "系統建立能力", "體驗追求熱情",
+            "責任承擔方式", "壓力反應模式", "工作效率風格", "休閒安排偏好",
+            "資訊收集範圍", "結論形成速度", "專案管理能力", "創意過程享受",
+            "學習結構需求", "成長路徑規劃"
         ]
     };
 
     let questionId = 1;
     
     // 每個維度生成30題，共120題
-    Object.keys(categories).forEach((dichotomy) => {
-        const dimCategories = categories[dichotomy];
+    Object.keys(detailedCategories).forEach((dichotomy) => {
+        const dimCategories = detailedCategories[dichotomy];
         for (let i = 0; i < 30; i++) {
             const category = dimCategories[i % dimCategories.length];
             const isFirstOption = Math.random() > 0.5;
             
             questions.push({
                 id: questionId++,
-                text: `關於${category}，您通常會：`,
+                text: `在${category}方面，您通常：`,
                 options: isFirstOption ? 
                     [
-                        `傾向於${getOptionText(dichotomy, 0, category)}`,
-                        `傾向於${getOptionText(dichotomy, 1, category)}`
+                        `更傾向於${getProOptionText(dichotomy, 0)}`,
+                        `更傾向於${getProOptionText(dichotomy, 1)}`
                     ] : [
-                        `更注重${getOptionText(dichotomy, 1, category)}`,
-                        `更注重${getOptionText(dichotomy, 0, category)}`
+                        `更注重${getProOptionText(dichotomy, 1)}`,
+                        `更注重${getProOptionText(dichotomy, 0)}`
                     ],
                 dichotomy: dichotomy
             });
@@ -402,7 +373,7 @@ function generateProQuestions() {
     return questions;
 }
 
-function getOptionText(dichotomy, optionIndex, category) {
+function getProOptionText(dichotomy, optionIndex) {
     const optionTexts = {
         'EI': [
             '與他人互動和外部世界的刺激',
@@ -423,6 +394,144 @@ function getOptionText(dichotomy, optionIndex, category) {
     };
     
     return optionTexts[dichotomy][optionIndex];
+}
+
+// ==================== 解鎖流程（最安全合規版本） ====================
+let unlockInterval = null;
+let isHilltopAdsLoaded = { expert: false, pro: false };
+
+function loadHilltopAds(type) {
+    if (isHilltopAdsLoaded[type]) return;
+    
+    let scriptSrc = '';
+    
+    // 根據您檔案中使用的不同 Hilltopads 腳本進行區分
+    if (type === 'expert') {
+        // 專家測驗 Hilltopads 腳本
+        scriptSrc = 'https://starry-perception.com/ctD.9M6Nbh2x5SltS-WzQy9-Naj/chywNGjdUF2QOTSX0y2ENwzIIA2GN/TmcTwl';
+    } else if (type === 'pro') {
+        // Pro測驗 Hilltopads 腳本
+        scriptSrc = 'https://starry-perception.com/c.DX9y6jbT2/5Zl_StWYQa9dN/jPc_yZN/jeUG2FN/yV0o2NNNz/I/2/N/TKYx4_';
+    }
+    
+    if (scriptSrc) {
+        const script = document.createElement('script');
+        script.src = scriptSrc;
+        script.async = true;
+        script.referrerPolicy = 'no-referrer-when-downgrade';
+        document.head.appendChild(script);
+        console.log(`Hilltopads 廣告 (${type}) 在內容解鎖後被動載入`);
+        isHilltopAdsLoaded[type] = true;
+    }
+}
+
+function renderLockedPage(type, title, description) {
+    // 每次渲染前清理舊的計時器
+    if (unlockInterval) {
+        clearInterval(unlockInterval);
+    }
+
+    // 🌟 關鍵：自動啟動倒數計時，無需用戶點擊
+    unlockAfterCountdown(type, 10);
+    
+    return `
+        <div class="fade-in text-center py-8">
+            <div class="w-16 h-16 md:w-20 md:h-20 mx-auto mb-6 rounded-full bg-gradient-to-r from-gray-200 to-gray-300 flex items-center justify-center">
+                <span class="text-3xl">🔒</span>
+            </div>
+            <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-3">${title}</h2>
+            <p class="text-gray-600 text-sm md:text-base max-w-xl mx-auto mb-8">${description}</p>
+            
+            <div class="max-w-md mx-auto">
+                <div class="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-2xl border border-blue-200 mb-8">
+                    <h3 class="text-lg md:text-xl font-bold text-gray-800 mb-4">內容將自動解鎖</h3>
+                    <p class="text-gray-700 mb-6 text-sm md:text-base">
+                        您無需點擊。內容將在下方倒數結束後立即顯示。
+                        <span class="block font-semibold mt-2">感謝您支持免費服務！</span>
+                    </p>
+                    
+                    <div id="unlock-timer" class="text-3xl font-bold text-indigo-600 pulse">
+                        10 秒後自動解鎖...
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function unlockAfterCountdown(type, seconds) {
+    let countdown = seconds;
+    const timerElement = document.getElementById('unlock-timer');
+
+    if (timerElement) {
+        timerElement.innerHTML = `${countdown} 秒後自動解鎖...`;
+    }
+
+    unlockInterval = setInterval(() => {
+        countdown--;
+        const currentTimerElement = document.getElementById('unlock-timer');
+        
+        if (countdown > 0) {
+            if (currentTimerElement) {
+                currentTimerElement.innerHTML = `${countdown} 秒後自動解鎖...`;
+            }
+        } else {
+            clearInterval(unlockInterval);
+            if (currentTimerElement) {
+                currentTimerElement.innerHTML = '✅ 內容已解鎖！';
+                currentTimerElement.classList.remove('pulse');
+            }
+
+            // 執行解鎖
+            if (type === 'expert') {
+                quizState.expert.unlocked = true;
+            } else if (type === 'pro') {
+                quizState.pro.unlocked = true;
+            }
+            
+            // 🌟 關鍵：內容解鎖後，載入 Hilltopads 腳本
+            loadHilltopAds(type);
+            
+            setTimeout(() => {
+                renderContent(); // 重新渲染到測驗頁面
+                // renderContent() 內部會調用 loadGoogleAds()
+            }, 1000); // 延遲 1 秒以顯示解鎖訊息
+        }
+    }, 1000);
+}
+
+// 確保 showUnlockPage 只是切換標籤的入口
+function showUnlockPage(type) {
+    switchTab(type); 
+}
+
+// ==================== Google AdSense 廣告 ====================
+function loadGoogleAds() {
+    // 載入Google廣告
+    const googleAd = document.getElementById('google-ad');
+    if (googleAd && !googleAd.querySelector('.adsbygoogle')) {
+        googleAd.innerHTML = `
+            <ins class="adsbygoogle"
+                 style="display:block; width:100%; min-height:250px;"
+                 data-ad-client="ca-pub-2895749032536610"
+                 data-ad-slot="1132687996"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true">
+            </ins>
+        `;
+    }
+    
+    // 推送廣告
+    setTimeout(() => {
+        if (typeof adsbygoogle !== 'undefined') {
+            try {
+                (adsbygoogle = window.adsbygoogle || []).push({});
+                console.log('Google AdSense 廣告已載入');
+            } catch (e) {
+                console.log('Google廣告載入中...');
+            }
+        }
+    }, 500);
 }
 
 // ==================== 標籤切換 ====================
@@ -449,14 +558,14 @@ function renderContent() {
     
     if (currentTab === 'basic') {
         if (quizState.basic.completed) {
-            area.innerHTML = renderBasicResults();
+            area.innerHTML = renderResults('basic');
         } else {
             area.innerHTML = renderBasicQuiz();
         }
     } else if (currentTab === 'expert') {
         if (quizState.expert.unlocked) {
             if (quizState.expert.completed) {
-                area.innerHTML = renderExpertResults();
+                area.innerHTML = renderResults('expert');
             } else {
                 area.innerHTML = renderExpertQuiz();
             }
@@ -466,7 +575,7 @@ function renderContent() {
     } else if (currentTab === 'pro') {
         if (quizState.pro.unlocked) {
             if (quizState.pro.completed) {
-                area.innerHTML = renderProResults();
+                area.innerHTML = renderResults('pro');
             } else {
                 area.innerHTML = renderProQuiz();
             }
@@ -475,8 +584,8 @@ function renderContent() {
         }
     }
     
-    // 載入廣告
-    loadAds();
+    // 載入Google廣告
+    loadGoogleAds();
 }
 
 // ==================== 基本測驗渲染 ====================
@@ -770,18 +879,6 @@ function calculateResults(quizType) {
 }
 
 // ==================== 結果頁面 ====================
-function renderBasicResults() {
-    return renderResults('basic');
-}
-
-function renderExpertResults() {
-    return renderResults('expert');
-}
-
-function renderProResults() {
-    return renderResults('pro');
-}
-
 function renderResults(quizType) {
     const result = quizState[quizType].result;
     if (!result) return '<div class="text-center py-12">計算結果中...</div>';
@@ -835,53 +932,6 @@ function renderResults(quizType) {
                         </div>
                     `).join('')}
                 </div>
-                
-                <!-- 分享區塊 -->
-                <div class="bg-white p-4 rounded-xl border border-gray-200 mb-4">
-                    <h3 class="font-bold text-gray-800 mb-3 text-center">📢 分享您的結果</h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="shareResult('facebook', '${result.type}', '${shareText}', '${shareUrl}')" 
-                                class="bg-blue-600 text-white p-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm">
-                            Facebook
-                        </button>
-                        <button onclick="shareResult('line', '${result.type}', '${shareText}', '${shareUrl}')" 
-                                class="bg-green-500 text-white p-2 rounded-lg font-semibold hover:bg-green-600 transition-colors text-sm">
-                            Line
-                        </button>
-                        <button onclick="shareResult('copy', '${result.type}', '${shareText}', '${shareUrl}')" 
-                                class="bg-gray-700 text-white p-2 rounded-lg font-semibold hover:bg-gray-800 transition-colors text-sm">
-                            複製連結
-                        </button>
-                        <button onclick="shareResult('whatsapp', '${result.type}', '${shareText}', '${shareUrl}')" 
-                                class="bg-green-600 text-white p-2 rounded-lg font-semibold hover:bg-green-700 transition-colors text-sm">
-                            WhatsApp
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- 進階測驗推薦 -->
-                ${!isPro && !isExpert ? `
-                <div class="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-xl border border-amber-200">
-                    <h3 class="font-bold text-gray-800 mb-3">🎯 探索進階分析</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div class="bg-white p-3 rounded-lg border border-amber-100">
-                            <h4 class="font-bold text-gray-800 mb-2">專家測驗 (69題)</h4>
-                            <p class="text-gray-600 text-xs mb-2">深度性格分析，職業建議與人際關係指南</p>
-                            <button onclick="showUnlockPage('expert')" class="w-full py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-bold text-sm hover:opacity-90">
-                                解鎖專家測驗
-                            </button>
-                        </div>
-                        
-                        <div class="bg-white p-3 rounded-lg border border-purple-100">
-                            <h4 class="font-bold text-gray-800 mb-2">精準 Pro (120題)</h4>
-                            <p class="text-gray-600 text-xs mb-2">終極性格評估，最全面的性格剖析與專業建議</p>
-                            <button onclick="showUnlockPage('pro')" class="w-full py-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg font-bold text-sm hover:opacity-90">
-                                解鎖精準 Pro
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                ` : ''}
             </div>
             
             <!-- 按鈕區 -->
@@ -898,38 +948,6 @@ function renderResults(quizType) {
     `;
 }
 
-function shareResult(platform, mbtiType, text, url) {
-    const fullText = `${text}\n\n測驗連結：${url}`;
-    
-    switch(platform) {
-        case 'facebook':
-            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`, '_blank');
-            break;
-        case 'line':
-            window.open(`https://line.me/R/msg/text/?${encodeURIComponent(fullText)}`, '_blank');
-            break;
-        case 'whatsapp':
-            window.open(`https://wa.me/?text=${encodeURIComponent(fullText)}`, '_blank');
-            break;
-        case 'copy':
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(fullText).then(() => {
-                    alert('連結已複製到剪貼簿！');
-                });
-            } else {
-                // 降級方案
-                const textArea = document.createElement('textarea');
-                textArea.value = fullText;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                alert('連結已複製到剪貼簿！');
-            }
-            break;
-    }
-}
-
 function restartQuiz(quizType) {
     quizState[quizType] = {
         currentQuestion: 0,
@@ -940,160 +958,17 @@ function restartQuiz(quizType) {
     renderContent();
 }
 
-// ==================== 鎖定頁面 ====================
-function renderLockedPage(type, title, description) {
-    return `
-        <div class="fade-in text-center py-8">
-            <div class="w-16 h-16 md:w-20 md:h-20 mx-auto mb-6 rounded-full bg-gradient-to-r from-gray-200 to-gray-300 flex items-center justify-center">
-                <span class="text-3xl">🔒</span>
-            </div>
-            <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-3">${title}</h2>
-            <p class="text-gray-600 text-sm md:text-base max-w-xl mx-auto mb-8">${description}</p>
-            
-            <div class="max-w-md mx-auto">
-                <div class="bg-gradient-to-r from-amber-50 to-orange-50 p-6 rounded-2xl border border-amber-200 mb-8">
-                    <h3 class="text-lg md:text-xl font-bold text-gray-800 mb-4">解鎖 ${title}</h3>
-                    <p class="text-gray-700 mb-6 text-sm md:text-base">
-                        點擊下方按鈕，觀看完贊助廣告後即可立即解鎖。
-                        <span class="block font-semibold mt-2">感謝您支持免費服務！</span>
-                    </p>
-                    
-                    <button onclick="startUnlockProcess('${type}', this)" 
-                            class="btn-unlock w-full text-base md:text-lg">
-                        🎬 點擊觀看廣告解鎖
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-function showUnlockPage(type) {
-    switchTab(type);
-}
-
-// ==================== 解鎖流程 ====================
-function startUnlockProcess(type, button) {
-    console.log(`開始解鎖 ${type} 測驗`);
-    
-    const originalText = button.innerHTML;
-    button.innerHTML = '⏳ 正在觸發廣告...';
-    button.disabled = true;
-    
-    // 觸發不同的廣告腳本
-    triggerUnlockAd(type);
-    
-    // 倒數計時
-    let countdown = 8;
-    const interval = setInterval(() => {
-        if (countdown > 0) {
-            button.innerHTML = `⌛ 廣告載入中 (${countdown}秒)`;
-            countdown--;
-        } else {
-            clearInterval(interval);
-            completeUnlock(type, button, originalText);
-        }
-    }, 1000);
-}
-
-function triggerUnlockAd(type) {
-    // 使用不同的廣告腳本確保單獨觸發
-    let scriptContent = '';
-    
-    if (type === 'expert') {
-        // 專家測驗廣告腳本
-        scriptContent = `
-            (function(){
-                var d=document, s=d.createElement('script');
-                s.src='https://starry-perception.com/ctD.9M6Nbh2x5SltS-WzQy9-Naj/chywNGjdUF2QOTSX0y2ENwzIIA2GN/TmcTwl';
-                s.async=true;
-                s.referrerPolicy='no-referrer-when-downgrade';
-                d.head.appendChild(s);
-                console.log('專家測驗廣告觸發');
-            })();
-        `;
-    } else if (type === 'pro') {
-        // Pro測驗廣告腳本（不同的來源）
-        scriptContent = `
-            (function(){
-                var d=document, s=d.createElement('script');
-                s.src='https://starry-perception.com/c.DX9y6jbT2/5Zl_StWYQa9dN/jPc_yZN/jeUG2FN/yV0o2NNNz/I/2/N/TKYx4_';
-                s.async=true;
-                s.referrerPolicy='no-referrer-when-downgrade';
-                d.head.appendChild(s);
-                console.log('Pro測驗廣告觸發');
-            })();
-        `;
-    }
-    
-    const script = document.createElement('script');
-    script.innerHTML = scriptContent;
-    document.head.appendChild(script);
-    
-    // 5秒後移除
-    setTimeout(() => {
-        if (script.parentNode) {
-            script.parentNode.removeChild(script);
-        }
-    }, 5000);
-}
-
-function completeUnlock(type, button, originalText) {
-    if (type === 'expert') {
-        quizState.expert.unlocked = true;
-    } else if (type === 'pro') {
-        quizState.pro.unlocked = true;
-    }
-    
-    button.innerHTML = '✅ 解鎖成功！';
-    
-    // 2秒後刷新頁面
-    setTimeout(() => {
-        renderContent();
-        loadAds(); // 重新載入廣告
-    }, 2000);
-}
-
-// ==================== 廣告系統 ====================
-function loadAds() {
-    // 載入底部廣告
-    const bottomAd = document.getElementById('bottom-ad');
-    if (bottomAd && !bottomAd.querySelector('.adsbygoogle')) {
-        bottomAd.innerHTML = `
-            <ins class="adsbygoogle"
-                 style="display:block; width:100%; min-height:250px;"
-                 data-ad-client="ca-pub-2895749032536610"
-                 data-ad-slot="1132687996"
-                 data-ad-format="auto"
-                 data-full-width-responsive="true">
-            </ins>
-        `;
-    }
-    
-    // 推送廣告
-    setTimeout(() => {
-        if (typeof adsbygoogle !== 'undefined') {
-            try {
-                (adsbygoogle = window.adsbygoogle || []).push({});
-                console.log('Google AdSense 廣告已載入');
-            } catch (e) {
-                console.log('廣告載入中...');
-            }
-        }
-    }, 500);
-}
-
 // ==================== 初始化 ====================
 function init() {
     renderContent();
     
-    // 初始載入廣告
-    setTimeout(loadAds, 1000);
+    // 初始載入Google廣告
+    setTimeout(loadGoogleAds, 1000);
     
     // 監聽頁面可見性變化
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
-            loadAds();
+            loadGoogleAds();
         }
     });
 }
