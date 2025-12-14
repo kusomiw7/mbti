@@ -75,6 +75,32 @@
         }
         .btn-unlock:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(249, 115, 22, 0.3); }
         
+        /* 分享按鈕樣式 */
+        .btn-share {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-share:hover { transform: translateY(-2px); }
+        
+        .btn-facebook { background: #1877f2; color: white; }
+        .btn-facebook:hover { background: #166fe5; box-shadow: 0 10px 25px rgba(24, 119, 242, 0.3); }
+        
+        .btn-line { background: #00c300; color: white; }
+        .btn-line:hover { background: #00b300; box-shadow: 0 10px 25px rgba(0, 195, 0, 0.3); }
+        
+        .btn-copy { background: #6b7280; color: white; }
+        .btn-copy:hover { background: #4b5563; box-shadow: 0 10px 25px rgba(107, 114, 128, 0.3); }
+        
+        .btn-whatsapp { background: #25d366; color: white; }
+        .btn-whatsapp:hover { background: #1da851; box-shadow: 0 10px 25px rgba(37, 211, 102, 0.3); }
+        
         /* 廣告容器 */
         .ad-container {
             width: 100%;
@@ -878,6 +904,39 @@ function calculateResults(quizType) {
     };
 }
 
+// ==================== 分享功能 ====================
+function shareResult(platform, mbtiType, text, url) {
+    const fullText = `${text}\n\n測驗連結：${url}`;
+    
+    switch(platform) {
+        case 'facebook':
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(text)}`, '_blank');
+            break;
+        case 'line':
+            window.open(`https://line.me/R/msg/text/?${encodeURIComponent(fullText)}`, '_blank');
+            break;
+        case 'whatsapp':
+            window.open(`https://wa.me/?text=${encodeURIComponent(fullText)}`, '_blank');
+            break;
+        case 'copy':
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(fullText).then(() => {
+                    alert('連結已複製到剪貼簿！');
+                });
+            } else {
+                // 降級方案
+                const textArea = document.createElement('textarea');
+                textArea.value = fullText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('連結已複製到剪貼簿！');
+            }
+            break;
+    }
+}
+
 // ==================== 結果頁面 ====================
 function renderResults(quizType) {
     const result = quizState[quizType].result;
@@ -931,6 +990,32 @@ function renderResults(quizType) {
                             </div>
                         </div>
                     `).join('')}
+                </div>
+                
+                <!-- 分享區塊 -->
+                <div class="bg-white p-4 rounded-xl border border-gray-200 mb-4">
+                    <h3 class="font-bold text-gray-800 mb-3 text-center">📢 分享您的結果</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="shareResult('facebook', '${result.type}', '${shareText}', '${shareUrl}')" 
+                                class="btn-share btn-facebook">
+                            <span>Facebook</span>
+                        </button>
+                        <button onclick="shareResult('line', '${result.type}', '${shareText}', '${shareUrl}')" 
+                                class="btn-share btn-line">
+                            <span>Line</span>
+                        </button>
+                        <button onclick="shareResult('copy', '${result.type}', '${shareText}', '${shareUrl}')" 
+                                class="btn-share btn-copy">
+                            <span>複製連結</span>
+                        </button>
+                        <button onclick="shareResult('whatsapp', '${result.type}', '${shareText}', '${shareUrl}')" 
+                                class="btn-share btn-whatsapp">
+                            <span>WhatsApp</span>
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-4 text-center">
+                        分享給朋友，一起探索性格的奧秘！
+                    </p>
                 </div>
             </div>
             
