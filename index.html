@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MBTI 廣告解鎖測驗系統 - 最終安全優化版</title>
+    <title>MBTI 測驗系統 - 最終正式發布版</title>
 
     <meta name="google-adsense-account" content="ca-pub-2895749032536610"> 
     
@@ -84,8 +84,8 @@
 
         // JavaScript 狀態變數
         let activeTab = 'tab1';
-        let isExpertUnlocked = false;
-        let isTab3Accessible = false;
+        let isExpertUnlocked = false; // ❌ 鎖定：需要觀看廣告解鎖
+        let isTab3Accessible = false;  // ❌ 鎖定：需要觀看廣告解鎖
 
         // 儲存答案 (使用稀疏陣列)
         let basicAnswers = [];
@@ -100,10 +100,8 @@
         // 🌟 Ad-Blocker 狀態
         let isAdBlockerActive = false;
         
-        // 🌟 用於防止假解鎖的時間戳記 (Anti-Cheat)
-        let pendingUnlockTarget = null;
-        let pendingUnlockTimestamp = 0;
-        const UNLOCK_DELAY_MS = 3000; // 模擬廣告觀看/載入的延遲時間 (3秒)
+        // 🌟 解鎖/贊助延遲
+        const SPONSOR_DELAY_MS = 3000; // 模擬廣告觀看/載入的延遲時間 (3秒)
 
         // 16 題基本測驗 (實際題目 - 內容保持不變)
         const basicQuestions = [
@@ -154,7 +152,6 @@
 
         // --- 核心功能: 真實 AdSense 廣告渲染 (用於一般頁面) ---
         function getRealAdHtml(slotId = "1132687996") {
-            // 預設使用原始的通用 ID
             const adSlotId = slotId; 
             
             return `
@@ -173,7 +170,6 @@
                 </div>
                 <script>
                     try {
-                        // 異步推入廣告，讓 Google 載入內容
                         (adsbygoogle = window.adsbygoogle || []).push({});
                     } catch (e) {
                         console.error("AdSense push failed:", e);
@@ -182,25 +178,24 @@
             `;
         }
 
-        // --- 核心功能: 第三方廣告渲染 (用於解鎖頁面) ---
-        // 處理 Expert Unlock (tab2) 的腳本
+        // --- 核心功能: 第三方廣告 1 (用於基本測驗/鎖定頁面 1) ---
         function getThirdPartyAd1() {
             return `
                 <div class="pt-4 mt-8 bg-pink-100 shadow-inner rounded-xl text-center border-t-4 border-pink-400">
                     <h2 class="text-base font-bold text-gray-700 p-3 pb-2 border-b border-gray-200">
-                        ── 贊助商 1 廣告 (解鎖專家測驗) ──
+                        ── 贊助商廣告 1 ──
                     </h2>
                     <div class="w-full p-3 min-h-[100px] flex items-center justify-center text-sm text-gray-500">
-                         點擊下方按鈕後，廣告將在背景運行 3 秒以解鎖。
+                         點擊按鈕後，廣告將在背景運行，感謝您的自願贊助！
                     </div>
                 </div>
                 <script>
-                    (function(bbki){
+                    (function(eil){
                     var d = document,
                         s = d.createElement('script'),
                         l = d.scripts[d.scripts.length - 1];
-                    s.settings = bbki || {};
-                    s.src = "\/\/starry-perception.com\/cwD\/9q6Sb.2N5AlFSHWdQJ9pNmjrcvynNrjcUu2MNDyB0u2\/NazBIS2dNuTjYM4-";
+                    s.settings = eil || {};
+                    s.src = "\/\/starry-perception.com\/cnD_9.6ebK2l5\/ljSmWIQe9ZNejJcsygNyjZUl2mNQyX0o2QNozzIo2BNETsYc4p";
                     s.async = true;
                     s.referrerPolicy = 'no-referrer-when-downgrade';
                     l.parentNode.insertBefore(s, l);
@@ -209,24 +204,24 @@
             `;
         }
 
-        // 處理 Pro Unlock (tab3) 的腳本
+        // --- 核心功能: 第三方廣告 2 (用於專家測驗/鎖定頁面 2) ---
         function getThirdPartyAd2() {
             return `
                 <div class="pt-4 mt-8 bg-yellow-100 shadow-inner rounded-xl text-center border-t-4 border-yellow-400">
                     <h2 class="text-base font-bold text-gray-700 p-3 pb-2 border-b border-gray-200">
-                        ── 贊助商 2 廣告 (解鎖精準 Pro) ──
+                        ── 贊助商廣告 2 ──
                     </h2>
                     <div class="w-full p-3 min-h-[100px] flex items-center justify-center text-sm text-gray-500">
-                         點擊下方按鈕後，廣告將在背景運行 3 秒以解鎖。
+                         點擊按鈕後，廣告將在背景運行，感謝您的自願贊助！
                     </div>
                 </div>
                 <script>
-                    (function(rq){
+                    (function(xdk){
                     var d = document,
                         s = d.createElement('script'),
                         l = d.scripts[d.scripts.length - 1];
-                    s.settings = rq || {};
-                    s.src = "\/\/starry-perception.com\/c.Dj9m6fbt2w5mlmSZWLQm9eNfjEcQyfN\/jCU\/2bO\/S\/0L2_NLz\/I\/2kN\/TEcnwH";
+                    s.settings = xdk || {};
+                    s.src = "\/\/starry-perception.com\/cCDE9w6.b\/2Q5Al-SNW\/QU9KN\/jDcHy-N\/jIUH2MO\/Sr0G2\/NSzPI\/2\/NgTgc_wM";
                     s.async = true;
                     s.referrerPolicy = 'no-referrer-when-downgrade';
                     l.parentNode.insertBefore(s, l);
@@ -234,7 +229,6 @@
                 <\/script>
             `;
         }
-        // -----------------------------------------------------------
 
 
         // --- 輔助函數: 取得當前測驗的資料 ---
@@ -270,10 +264,9 @@
         }
 
         // -----------------------------------------------------------
-        // 🛡️ Ad-Blocker 偵測 (檢查 AdSense 主腳本是否被阻擋)
+        // 🛡️ Ad-Blocker 偵測
         // -----------------------------------------------------------
         function checkAdBlocker() {
-            // 如果 window.adsbygoogle 變數不存在，表示 Ad-Blocker 很可能阻止了主腳本的載入。
             isAdBlockerActive = (typeof window.adsbygoogle === 'undefined');
             return isAdBlockerActive;
         }
@@ -302,16 +295,16 @@
                 if (totalAnswered === quizData.count) {
                     title = `【已完成】${quizData.level}`;
                     contentHtml = renderResults(quizType);
-                } else if (activeTab === 'tab1') {
+                } else if (activeTab === 'tab1') { 
                     title = `【基本測驗】 (進度: ${totalAnswered} / ${BASIC_QUIZ_COUNT})`;
                     contentHtml = renderQuiz('basic');
-                } else if (!isExpertUnlocked && activeTab === 'tab2') {
+                } else if (!isExpertUnlocked && activeTab === 'tab2') { // 鎖定檢查
                     title = "【鎖定】專家測驗 (69 題)";
                     contentHtml = renderLockedContent('專家測驗', 'tab2');
                 } else if (activeTab === 'tab2') {
                     title = `【專家測驗】 (進度: ${totalAnswered} / ${EXPERT_QUIZ_COUNT})`;
                     contentHtml = renderQuiz('expert');
-                } else if (!isTab3Accessible && activeTab === 'tab3') {
+                } else if (!isTab3Accessible && activeTab === 'tab3') { // 鎖定檢查
                     title = `【鎖定】精準 Pro (${CUSTOM_QUIZ_COUNT} 題)`;
                     contentHtml = renderLockedContent('精準 Pro', 'tab3');
                 } else if (activeTab === 'tab3') {
@@ -453,157 +446,100 @@
         }
         
         // -----------------------------------------------------------
-        // 修改 renderLockedContent 函數 (使用第三方廣告 + Ad-Blocker 檢查)
+        // 📣 處理廣告觀看與分頁解鎖的流程 (新的邏輯)
         // -----------------------------------------------------------
-        function renderLockedContent(tabName, targetTabId) {
-            const unlockTarget = targetTabId === 'tab2' ? 'expert' : 'pro';
-            const unlockText = targetTabId === 'tab2' ? '專家測驗 (69 題)' : '精準 Pro (120 題)';
+        function unlockTab(target) {
             
-            // 根據解鎖目標，決定使用哪個第三方廣告腳本
-            const thirdPartyAdHtml = (targetTabId === 'tab2') ? getThirdPartyAd1() : getThirdPartyAd2();
-
-            if (isAdBlockerActive) {
-                 return `
-                    <div class="text-center p-8 bg-red-100 rounded-xl border-4 border-dashed border-red-500">
-                        <p class="text-2xl font-bold text-red-700 mb-4">
-                            🚫 廣告阻擋器偵測！
-                        </p>
-                        <p class="text-gray-700 mb-6">
-                            偵測到您啟用了去廣告軟體。為了維持本站運作，請關閉您的 Ad-Blocker 並刷新頁面，才能解鎖此進階內容。
-                        </p>
-                        <button onclick="window.location.reload()"
-                            class="px-8 py-3 bg-red-500 text-white font-extrabold rounded-full shadow-lg hover:scale-[1.05]">
-                            已關閉阻擋器，刷新頁面
-                        </button>
-                    </div>
-                    ${getRealAdHtml('1132687996')} 
-                 `;
-            }
-            
-            // 正常鎖定內容
-            return `
-                <div class="text-center p-8 bg-locked-gray/20 rounded-xl border-4 border-dashed border-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-600 mx-auto mb-4" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path stroke="none" d="M0 0h24v24H0" fill="none"></path>
-                        <path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"></path>
-                        <path d="M12 10l-2 2l4 4"></path>
-                    </svg>
-                    <p class="text-xl font-bold text-gray-700 mb-4">
-                        此為 ${tabName}，目前已鎖定 🔒
-                    </p>
-                    <p class="text-gray-600 mb-6">
-                        為了贊助系統的運作，請點擊下方按鈕以觀看廣告（模擬），即可立即解鎖此進階測驗！
-                    </p>
-                    <button onclick="startUnlockProcess('${unlockTarget}', this)"
-                        class="px-8 py-3 bg-ad-orange text-white font-extrabold rounded-full shadow-lg shadow-ad-orange/50 
-                        transition duration-300 transform hover:scale-[1.05] active:scale-100 flex items-center justify-center mx-auto">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                            <path stroke="none" d="M0 0h24v24H0" fill="none"></path>
-                            <path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path>
-                            <path d="M21 21l-6 -6"></path>
-                        </svg>
-                        點擊廣告立即解鎖 ${unlockText}
-                    </button>
-                </div>
-                ${thirdPartyAdHtml} 
-            `;
-        }
-
-        // -----------------------------------------------------------
-        // 🛡️ 處理解鎖前的延遲 (模擬廣告觀看)
-        // -----------------------------------------------------------
-        function startUnlockProcess(target, buttonElement) {
-            if (isAdBlockerActive) { // 👈 核心防護：阻止 Ad-Blocker 用戶進入解鎖流程
-                showMessageBox("⚠️ 請先關閉廣告阻擋器，否則無法進行解鎖。");
+            // 檢查 Ad-Blocker 
+            if (checkAdBlocker()) { 
+                showMessageBox("⚠️ 請先關閉廣告阻擋器，否則無法載入廣告進行解鎖。我們將暫時為您解鎖，但建議您關閉 Ad-Blocker 以支持系統運行。");
+                // 允許用戶在 Ad-Blocker 狀態下跳過解鎖
+                if (target === 'expert') {
+                    isExpertUnlocked = true;
+                } else if (target === 'pro') {
+                    isTab3Accessible = true;
+                }
+                setActiveTab(target === 'expert' ? 'tab2' : 'tab3');
                 return;
             }
 
-            // 設置防作弊的時間戳和目標
-            pendingUnlockTarget = target;
-            pendingUnlockTimestamp = Date.now();
+            const buttonElement = document.querySelector('.unlock-btn-container button');
+            if (!buttonElement) return;
+
+            const originalText = buttonElement.innerHTML;
             
             // 禁用按鈕並顯示載入狀態
             buttonElement.disabled = true;
-            buttonElement.innerHTML = '正在載入廣告，請稍候... (3 秒)';
+            buttonElement.innerHTML = '廣告載入中... 請稍候 (3 秒)';
             buttonElement.classList.add('bg-gray-400');
             buttonElement.classList.remove('bg-ad-orange', 'shadow-ad-orange/50');
 
-
             // 模擬廣告觀看延遲
             setTimeout(() => {
-                // 執行真正的解鎖邏輯 (帶有防作弊檢查)
-                unlockTab(target);
-                
-                // 無論成功與否，重置按鈕狀態 (如果元素還存在的話)
-                const unlockText = (target === 'expert') ? '專家測驗 (69 題)' : '精準 Pro (120 題)';
-                
-                // 檢查按鈕是否還在DOM中（可能已經跳轉頁面）
-                const currentButton = document.querySelector(`button[onclick*="startUnlockProcess('${target}')"]`);
+                let success = false;
 
+                if (target === 'expert') {
+                    isExpertUnlocked = true;
+                    success = true;
+                } else if (target === 'pro') {
+                    isTab3Accessible = true;
+                    success = true;
+                }
+
+                if (success) {
+                    showMessageBox(`🎉 廣告觀看完畢，${target === 'expert' ? '專家測驗' : '精準 Pro'} 已成功解鎖！`, () => {
+                        // 解鎖成功後，強制切換到目標分頁
+                        setActiveTab(target === 'expert' ? 'tab2' : 'tab3'); 
+                    });
+                } else {
+                    showMessageBox("⚠️ 解鎖失敗。請稍後再試。", () => {
+                        setActiveTab('tab1'); // 失敗返回基本頁面
+                    });
+                }
+
+                // 重置按鈕狀態 (如果還存在)
+                const currentButton = document.querySelector('.unlock-btn-container button');
                 if (currentButton) {
                     currentButton.disabled = false;
-                    currentButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path stroke="none" d="M0 0h24v24H0" fill="none"></path><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path></svg>點擊廣告立即解鎖 ${unlockText}`;
+                    currentButton.innerHTML = originalText;
                     currentButton.classList.add('bg-ad-orange', 'shadow-ad-orange/50');
                     currentButton.classList.remove('bg-gray-400');
                 }
 
-
-            }, UNLOCK_DELAY_MS);
-
+            }, SPONSOR_DELAY_MS); 
         }
 
         // -----------------------------------------------------------
-        // 廣告解鎖邏輯 (增加 Anti-Cheat 檢查)
+        // 渲染鎖定內容介面 (新的介面)
         // -----------------------------------------------------------
-        function unlockTab(target) {
+        function renderLockedContent(tabName, targetTabId) {
+            const target = targetTabId === 'tab2' ? 'expert' : 'pro';
+            // 根據目標載入不同的贊助廣告腳本
+            const adFunction = target === 'expert' ? getThirdPartyAd1() : getThirdPartyAd2();
             
-            // Anti-Cheat 檢查: 確保呼叫是透過 startUnlockProcess 延遲後觸發
-            const timeElapsed = Date.now() - pendingUnlockTimestamp;
-            
-            if (target !== pendingUnlockTarget || timeElapsed < UNLOCK_DELAY_MS - 500) {
-                // 只有在還未解鎖時才進行提示
-                if ( (target === 'expert' && !isExpertUnlocked) || (target === 'pro' && !isTab3Accessible) ) {
-                    console.warn(`Anti-Cheat Warning: Unlock attempt for ${target} failed. Elapsed time: ${timeElapsed}ms.`);
-                    showMessageBox("偵測到異常操作。請通過頁面上的按鈕正常解鎖（模擬觀看廣告），不要直接操作控制台。");
-                }
-                
-                // 清除狀態
-                pendingUnlockTarget = null;
-                pendingUnlockTimestamp = 0;
-                return; 
-            }
-
-            // -------------------------------------
-            // 以下是原來的正常解鎖邏輯 
-            // -------------------------------------
-            let message = '';
-            let targetTabId = '';
-            
-            if (target === 'expert' && !isExpertUnlocked) {
-                isExpertUnlocked = true;
-                message = "感謝您的支持！專家測驗已成功解鎖 🔓。點擊確認後將自動切換。";
-                targetTabId = 'tab2';
-            } else if (target === 'pro' && !isTab3Accessible) {
-                isTab3Accessible = true;
-                message = "贊助廣告已觀看完畢！精準 Pro 測驗已成功解鎖 🔓。點擊確認後將自動切換。";
-                targetTabId = 'tab3';
-            } else {
-                message = "此測驗已經解鎖過了。";
-                targetTabId = (target === 'expert' ? 'tab2' : 'tab3');
-            }
-
-            // 清除狀態
-            pendingUnlockTarget = null;
-            pendingUnlockTimestamp = 0;
-
-            showMessageBox(message, () => {
-                setActiveTab(targetTabId);
-            });
+            return `
+                <div class="text-center p-8 sm:p-12 bg-locked-gray/10 rounded-xl border-4 border-locked-gray shadow-inner">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-locked-gray mb-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                    </svg>
+                    <h2 class="text-3xl font-bold text-gray-700 mb-3">
+                        ${tabName} 尚未解鎖
+                    </h2>
+                    <p class="text-gray-600 mb-8 leading-relaxed">
+                        您必須觀看一則贊助廣告來解鎖此進階測驗。感謝您的支持！
+                    </p>
+                    <div class="unlock-btn-container">
+                        <button onclick="unlockTab('${target}')" 
+                            class="w-full py-4 bg-ad-orange text-white font-extrabold text-lg rounded-full shadow-xl shadow-ad-orange/50 hover:scale-[1.02] transition duration-200">
+                            點擊觀看廣告，立即解鎖 ${tabName}
+                        </button>
+                    </div>
+                </div>
+                ${adFunction}
+            `;
         }
-        // -----------------------------------------------------------
-        
-        // --- MBTI 結果計算和渲染 (保持不變) ---
+
+        // --- MBTI 結果計算和渲染 (略) ---
         const resultDescriptions = {
             'ISTJ': { title: '物流師 (Logistician)', desc: '務實、事實為中心，可靠性無與倫比。他們是傳統的守護者，重視結構和秩序。', color: 'text-primary-indigo' },
             'ISFJ': { title: '守衛者 (Defender)', desc: '非常忠誠和體貼，隨時準備保護所愛的人。他們是謙遜且勤奮的助人者，將服務他人視為自己的使命。', color: 'text-accent-green' },
@@ -711,7 +647,7 @@
         }
 
         // -----------------------------------------------------------
-        // 修改 renderResults 函數 (使用第三方廣告作為促銷下一階段的廣告)
+        // 渲染結果頁面 (包含贊助按鈕)
         // -----------------------------------------------------------
         function renderResults(quizType) {
             const result = calculateMBTIType(quizType);
@@ -728,16 +664,31 @@
             let nextAction;
             let finalAdHtml; 
             
-            if (quizType === 'basic' && !isExpertUnlocked) {
-                // 基本測驗結果頁面，使用第一個第三方廣告促銷解鎖專家測驗
-                finalAdHtml = getThirdPartyAd1();
-                nextAction = `<button onclick="startUnlockProcess('expert', this)" class="unlock-btn-expert w-full py-3 bg-ad-orange text-white font-extrabold rounded-full shadow-lg hover:scale-[1.02] mt-4">點擊廣告，解鎖下一階段：專家測驗</button>`;
-            } else if (quizType === 'expert' && !isTab3Accessible) {
-                // 專家測驗結果頁面，使用第二個第三方廣告促銷解鎖 Pro 測驗
-                finalAdHtml = getThirdPartyAd2();
-                nextAction = `<button onclick="startUnlockProcess('pro', this)" class="unlock-btn-pro w-full py-3 bg-ad-orange text-white font-extrabold rounded-full shadow-lg hover:scale-[1.02] mt-4">點擊廣告，解鎖最終階段：精準 Pro</button>`;
-            } else {
-                // 最高階段 (custom) 已完成，使用 AdSense 通用廣告
+            const sponsorTarget = quizType; 
+            
+            if (quizType === 'basic') { 
+                // 基本測驗結果使用 廣告組 1
+                finalAdHtml = getThirdPartyAd1(); 
+                nextAction = `<div class="unlock-btn-container">
+                    <button onclick="unlockTab('expert')" class="w-full py-3 bg-ad-orange text-white font-extrabold rounded-full shadow-lg hover:scale-[1.02] mt-4 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0" fill="none"></path><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path>
+                        </svg>
+                        觀看廣告，前往解鎖更高精準度的「專家測驗」
+                    </button>
+                </div>`;
+            } else if (quizType === 'expert') { 
+                // 專家測驗結果使用 廣告組 2
+                finalAdHtml = getThirdPartyAd2(); 
+                nextAction = `<div class="unlock-btn-container">
+                    <button onclick="unlockTab('pro')" class="w-full py-3 bg-ad-orange text-white font-extrabold rounded-full shadow-lg hover:scale-[1.02] mt-4 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0" fill="none"></path><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"></path><path d="M21 21l-6 -6"></path>
+                        </svg>
+                        觀看廣告，前往解鎖最高精準度的「精準 Pro」
+                    </button>
+                </div>`;
+            } else { // 精準 Pro 結果頁面
                 finalAdHtml = getRealAdHtml('1132687996'); 
                 nextAction = `<div class="p-4 bg-accent-green/20 text-accent-green font-bold text-center rounded-lg mt-4">恭喜！您已完成所有測驗，這是最高精準度報告。</div>`;
             }
@@ -798,17 +749,23 @@
                 ${finalAdHtml} `; 
         }
 
-        // --- 核心導航和狀態管理 (無修改) ---
+        // --- 核心導航和狀態管理 (調整後，用於檢查鎖定狀態) ---
         function setActiveTab(tabId) {
-            let targetTab = tabId;
-
-            if (tabId === 'tab2' && !isExpertUnlocked) {
-                targetTab = 'tab2';
-            } else if (tabId === 'tab3' && !isTab3Accessible) {
-                targetTab = 'tab3';
-            }
             
-            activeTab = targetTab;
+            // 1. 檢查是否嘗試切換到鎖定的分頁
+            if (tabId === 'tab2' && !isExpertUnlocked) {
+                activeTab = 'tab2'; // 暫時設置為 tab2 讓 renderTabContent 知道要渲染鎖定頁面
+                renderTabContent();
+                return; 
+            }
+            if (tabId === 'tab3' && !isTab3Accessible) {
+                activeTab = 'tab3'; // 暫時設置為 tab3 讓 renderTabContent 知道要渲染鎖定頁面
+                renderTabContent();
+                return;
+            }
+
+            // 2. 如果通過檢查（是 tab1 或已解鎖），則正常切換
+            activeTab = tabId;
 
             let quizType;
             if (activeTab === 'tab1') quizType = 'basic';
@@ -821,6 +778,7 @@
             
             setQuizIndex(quizType, totalAnswered);
 
+            // 3. 渲染按鈕樣式
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('bg-primary-indigo', 'text-white');
                 btn.classList.add('text-gray-500', 'hover:bg-primary-light/20');
@@ -832,16 +790,14 @@
                 currentBtn.classList.remove('text-gray-500', 'hover:bg-primary-light/20');
             }
 
+            // 4. 渲染內容
             renderTabContent();
         }
         
-        // --- 頁面啟動初始化 (移除啟動時彈窗) ---
+        // --- 頁面啟動初始化 ---
         document.addEventListener('DOMContentLoaded', (event) => {
-            // 由於 Ad-Blocker 偵測需要時間，先執行它
             checkAdBlocker(); 
             setActiveTab('tab1');
-            
-            // ⚠️ 已移除啟動時的警告彈窗，只在用戶嘗試解鎖時觸發檢查。
         });
 
     </script>
