@@ -16,13 +16,22 @@
         /* 手機優化 */
         @media (max-width: 768px) {
             .mobile-ad { 
-                min-height: 320px !important; 
+                min-height: 280px !important; 
                 margin: 20px 0;
             }
             .quiz-container { padding: 1rem !important; }
             .question-text { font-size: 1.1rem !important; }
-            .option-btn { padding: 1rem !important; margin: 0.5rem 0 !important; }
-            .ad-container { height: auto !important; min-height: 280px !important; }
+            .option-btn { padding: 0.8rem !important; margin: 0.4rem 0 !important; }
+            .ad-container { 
+                height: auto !important; 
+                min-height: 280px !important;
+                max-height: 320px !important;
+                overflow: hidden;
+            }
+            .result-container {
+                max-height: calc(100vh - 200px) !important;
+                overflow-y: auto;
+            }
         }
         
         /* 動畫效果 */
@@ -70,17 +79,18 @@
         .btn-share {
             background: linear-gradient(135deg, #10b981, #059669);
             color: white;
-            padding: 0.75rem 1.5rem;
+            padding: 0.75rem 1rem;
             border-radius: 0.5rem;
             font-weight: 600;
             transition: all 0.3s;
+            font-size: 0.9rem;
         }
         .btn-share:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); }
         
         /* 廣告容器 */
         .ad-container {
             width: 100%;
-            height: 250px;
+            height: 280px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -88,40 +98,69 @@
             border: 1px dashed #d1d5db;
             border-radius: 12px;
             overflow: hidden;
+            margin: 1rem 0;
+        }
+        
+        /* 結果頁面優化 */
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .result-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+        
+        /* 確保廣告可見 */
+        .main-content {
+            max-height: calc(100vh - 400px);
+            overflow-y: auto;
+        }
+        
+        /* 窄版佈局 */
+        .narrow-layout {
+            max-width: 900px !important;
+            margin: 0 auto !important;
         }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-    <div class="max-w-4xl mx-auto p-4">
+    <div class="narrow-layout max-w-4xl mx-auto p-3 md:p-4">
         <!-- 標題 -->
-        <header class="text-center mb-8 mt-4">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-3">🎭 MBTI 人格測驗系統</h1>
-            <p class="text-gray-600 max-w-2xl mx-auto">探索真實自我，免費測試16型人格，贊助廣告解鎖進階分析</p>
+        <header class="text-center mb-6 mt-2">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">🎭 MBTI 人格測驗系統</h1>
+            <p class="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">探索真實自我，免費測試16型人格，贊助廣告解鎖進階分析</p>
         </header>
         
         <!-- 主卡片 -->
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
             <!-- 標籤頁 -->
             <div class="flex border-b border-gray-200">
-                <button onclick="switchTab('basic')" id="tab-basic" class="flex-1 py-4 text-center font-semibold bg-indigo-600 text-white">
+                <button onclick="switchTab('basic')" id="tab-basic" class="flex-1 py-3 text-center font-semibold bg-indigo-600 text-white">
                     基本測驗 (16題)
                 </button>
-                <button onclick="switchTab('expert')" id="tab-expert" class="flex-1 py-4 text-center font-semibold text-gray-600 hover:bg-gray-50">
+                <button onclick="switchTab('expert')" id="tab-expert" class="flex-1 py-3 text-center font-semibold text-gray-600 hover:bg-gray-50">
                     專家測驗 (69題)
                 </button>
-                <button onclick="switchTab('pro')" id="tab-pro" class="flex-1 py-4 text-center font-semibold text-gray-600 hover:bg-gray-50">
+                <button onclick="switchTab('pro')" id="tab-pro" class="flex-1 py-3 text-center font-semibold text-gray-600 hover:bg-gray-50">
                     精準 Pro (120題)
                 </button>
             </div>
             
             <!-- 內容區 -->
-            <div id="content-area" class="p-4 md:p-8 min-h-[500px]">
+            <div id="content-area" class="p-3 md:p-6 min-h-[400px] main-content">
                 正在載入...
             </div>
         </div>
         
         <!-- 底部廣告（手機優化） -->
-        <div class="mt-8">
+        <div class="mt-4">
             <div class="mobile-ad ad-container">
                 <div id="bottom-ad">
                     <!-- Google AdSense 廣告載入區 -->
@@ -176,8 +215,119 @@ const BASIC_QUESTIONS = [
     { id: 16, text: "您將生活視為？", options: ["需要被控制、組織和做出結論的結構 (J)", "需要被體驗、探索和保持開放的過程 (P)"], dichotomy: 'JP' },
 ];
 
+// 生成專家測驗 69題
+const EXPERT_QUESTIONS = generateExpertQuestions();
+
 // 生成 PRO 120題完整題庫
 const PRO_QUESTIONS = generateProQuestions();
+
+function generateExpertQuestions() {
+    const questions = [];
+    const categories = {
+        EI: [
+            {q: "當您參加派對或社交活動時，您通常：", o1: "主動與陌生人交談，認識新朋友 (E)", o2: "與熟悉的朋友交談或安靜觀察 (I)"},
+            {q: "當您有新的想法時，您傾向：", o1: "立即與他人分享並討論 (E)", o2: "先獨自思考和完善 (I)"},
+            {q: "在團隊工作中，您更喜歡：", o1: "頻繁的會議和腦力激盪 (E)", o2: "獨立工作後整合成果 (I)"},
+            {q: "當您感到壓力時，您通常：", o1: "找人傾訴或參與活動分散注意力 (E)", o2: "需要獨處時間來整理思緒 (I)"},
+            {q: "您的思考過程通常是：", o1: "邊說邊思考，通過對話釐清思路 (E)", o2: "完全想清楚後再表達 (I)"},
+            {q: "週末您更傾向於：", o1: "安排社交活動或戶外活動 (E)", o2: "享受個人時間和愛好 (I)"},
+            {q: "在學習新技能時，您偏好：", o1: "小組學習或找教練指導 (E)", o2: "自學或線上課程 (I)"},
+            {q: "當您需要做出重要決定時，您：", o1: "諮詢多人的意見 (E)", o2: "依賴自己的分析和直覺 (I)"},
+            {q: "您認為自己的能量主要來自：", o1: "與他人互動 (E)", o2: "獨處時的反思 (I)"},
+            {q: "在會議中，您通常：", o1: "積極發言，主導討論 (E)", o2: "先聆聽，必要時才發言 (I)"},
+            {q: "您如何處理衝突？", o1: "直接面對並立即解決 (E)", o2: "需要時間思考後再回應 (I)"},
+            {q: "您更喜歡的工作環境是：", o1: "開放式辦公室，方便交流 (E)", o2: "私人辦公室或安靜空間 (I)"},
+            {q: "當您有成就時，您希望：", o1: "與大家分享慶祝 (E)", o2: "私下享受成就感 (I)"},
+            {q: "您的朋友圈通常是：", o1: "廣泛而多樣 (E)", o2: "小而深入 (I)"},
+            {q: "您認為自己更擅長：", o1: "口頭表達和即興演講 (E)", o2: "書面表達和深思熟慮 (I)"},
+            {q: "在陌生環境中，您通常：", o1: "快速適應並主動探索 (E)", o2: "先觀察了解再行動 (I)"},
+            {q: "當您遇到問題時，您傾向：", o1: "立即尋求幫助或討論 (E)", o2: "先嘗試自己解決 (I)"}
+        ],
+        SN: [
+            {q: "您更相信：", o1: "親身經歷和具體事實 (S)", o2: "直覺和可能性 (N)"},
+            {q: "在解決問題時，您更注重：", o1: "實際步驟和可行性 (S)", o2: "創新方法和遠見 (N)"},
+            {q: "您認為自己更擅長：", o1: "執行具體任務 (S)", o2: "產生新想法 (N)"},
+            {q: "您更喜歡閱讀：", o1: "實用指南和傳記 (S)", o2: "科幻小說和哲學書籍 (N)"},
+            {q: "在旅行時，您更重視：", o1: "具體的行程和景點 (S)", o2: "整體體驗和感受 (N)"},
+            {q: "您更傾向於記住：", o1: "具體的細節和事實 (S)", o2: "整體的概念和模式 (N)"},
+            {q: "當學習新事物時，您偏好：", o1: "按部就班的指導 (S)", o2: "理解背後的原理 (N)"},
+            {q: "您更擅長處理：", o1: "當下具體的問題 (S)", o2: "未來的可能性 (N)"},
+            {q: "您認為自己更：", o1: "務實和現實 (S)", o2: "富有想像力和創意 (N)"},
+            {q: "在工作中，您更注重：", o1: "具體的成果和數據 (S)", o2: "整體的願景和意義 (N)"},
+            {q: "您更喜歡的娛樂是：", o1: "體育活動或手工藝 (S)", o2: "幻想遊戲或藝術創作 (N)"},
+            {q: "您更信任：", o1: "經驗證明的方法 (S)", o2: "創新的方法 (N)"},
+            {q: "您更擅長：", o1: "處理實際的細節 (S)", o2: "看到大局 (N)"},
+            {q: "您認為自己更傾向於：", o1: "傳統和已知的方法 (S)", o2: "創新和未知的探索 (N)"},
+            {q: "在購物時，您更注重：", o1: "產品的實用性和品質 (S)", o2: "產品的設計和理念 (N)"},
+            {q: "您更喜歡的溝通方式是：", o1: "直接和具體的說明 (S)", o2: "隱喻和象徵性的表達 (N)"},
+            {q: "您認為時間更應該用於：", o1: "完成具體任務 (S)", o2: "探索新的可能性 (N)"}
+        ],
+        TF: [
+            {q: "在做決定時，您更重視：", o1: "邏輯和客觀事實 (T)", o2: "價值觀和他人感受 (F)"},
+            {q: "您認為批評應該：", o1: "直接指出問題所在 (T)", o2: "以委婉的方式表達 (F)"},
+            {q: "在評價他人時，您更看重：", o1: "能力和效率 (T)", o2: "動機和努力 (F)"},
+            {q: "面對衝突時，您更傾向：", o1: "堅持原則和真理 (T)", o2: "維護關係和諧 (F)"},
+            {q: "您認為更好的決策基於：", o1: "客觀分析 (T)", o2: "同理心 (F)"},
+            {q: "您更欣賞：", o1: "智慧和專業知識 (T)", o2: "善良和同情心 (F)"},
+            {q: "在團隊中，您更注重：", o1: "任務的完成 (T)", o2: "團隊的氣氛 (F)"},
+            {q: "您認為公平意味著：", o1: "對每個人都一視同仁 (T)", o2: "考慮每個人的特殊情況 (F)"},
+            {q: "在給予回饋時，您更傾向：", o1: "誠實但可能傷人 (T)", o2: "溫和但可能不夠直接 (F)"},
+            {q: "您更願意被描述為：", o1: "公正和理性 (T)", o2: "關懷和體貼 (F)"},
+            {q: "在解決問題時，您更注重：", o1: "問題本身 (T)", o2: "人的因素 (F)"},
+            {q: "您更傾向於：", o1: "分析情況 (T)", o2: "理解感受 (F)"},
+            {q: "您認為更好的領導者是：", o1: "果斷和有效率 (T)", o2: "支持和激勵人心 (F)"},
+            {q: "在學習時，您更重視：", o1: "理論的正確性 (T)", o2: "理論的人文價值 (F)"},
+            {q: "您更擅長：", o1: "分析數據 (T)", o2: "理解情緒 (F)"},
+            {q: "您認為成功更取決於：", o1: "能力和策略 (T)", o2: "人際關係和合作 (F)"},
+            {q: "您更傾向於相信：", o1: "客觀證據 (T)", o2: "個人直覺和價值觀 (F)"}
+        ],
+        JP: [
+            {q: "您更喜歡：", o1: "有計劃的生活 (J)", o2: "隨性的生活 (P)"},
+            {q: "面對截止日期，您通常：", o1: "提前完成 (J)", o2: "最後一刻完成 (P)"},
+            {q: "您的工作空間通常是：", o1: "整潔有序 (J)", o2: "創意混亂 (P)"},
+            {q: "在做決定時，您傾向：", o1: "快速決定 (J)", o2: "保持選項開放 (P)"},
+            {q: "您更喜歡：", o1: "完成任務 (J)", o2: "開始新任務 (P)"},
+            {q: "您認為自己更：", o1: "有組織和條理 (J)", o2: "靈活和適應性強 (P)"},
+            {q: "在旅行前，您通常：", o1: "詳細規劃 (J)", o2: "大致規劃 (P)"},
+            {q: "您更享受：", o1: "完成項目的滿足感 (J)", o2: "探索過程的樂趣 (P)"},
+            {q: "面對變化時，您通常：", o1: "感到不安 (J)", o2: "感到興奮 (P)"},
+            {q: "您更傾向於：", o1: "做出決定並堅持 (J)", o2: "保留改變的權利 (P)"},
+            {q: "您認為時間管理應該：", o1: "嚴格遵守計劃 (J)", o2: "根據情況調整 (P)"},
+            {q: "您更喜歡：", o1: "明確的指示 (J)", o2: "自由發揮的空間 (P)"},
+            {q: "在購物時，您通常：", o1: "知道自己要什麼 (J)", o2: "瀏覽後決定 (P)"},
+            {q: "您認為自己更擅長：", o1: "執行計劃 (J)", o2: "應對突發情況 (P)"},
+            {q: "您更傾向於：", o1: "結束討論做出決定 (J)", o2: "繼續討論探索可能性 (P)"},
+            {q: "您更喜歡的工作方式是：", o1: "按部就班 (J)", o2: "即興發揮 (P)"},
+            {q: "您認為生活應該：", o1: "有明確的目標和計劃 (J)", o2: "隨遇而安 (P)"}
+        ]
+    };
+
+    let questionId = 1;
+    
+    // 每個維度生成17題，共68題，再加一題綜合題
+    Object.keys(categories).forEach((dichotomy) => {
+        const dimQuestions = categories[dichotomy];
+        for (let i = 0; i < 17; i++) {
+            const q = dimQuestions[i % dimQuestions.length];
+            questions.push({
+                id: questionId++,
+                text: q.q,
+                options: [q.o1, q.o2],
+                dichotomy: dichotomy
+            });
+        }
+    });
+    
+    // 加一題綜合題
+    questions.push({
+        id: questionId,
+        text: "整體而言，您認為自己更傾向於：",
+        options: ["結構化、有組織的生活方式", "靈活、開放的生活方式"],
+        dichotomy: 'JP'
+    });
+    
+    return questions;
+}
 
 function generateProQuestions() {
     const questions = [];
@@ -227,7 +377,7 @@ function generateProQuestions() {
     let questionId = 1;
     
     // 每個維度生成30題，共120題
-    Object.keys(categories).forEach((dichotomy, index) => {
+    Object.keys(categories).forEach((dichotomy) => {
         const dimCategories = categories[dichotomy];
         for (let i = 0; i < 30; i++) {
             const category = dimCategories[i % dimCategories.length];
@@ -337,13 +487,13 @@ function renderBasicQuiz() {
     
     return `
         <div class="fade-in quiz-container">
-            <div class="mb-8">
+            <div class="mb-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-2xl font-bold text-gray-800">基本人格測驗</h2>
-                    <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full font-semibold">${answered}/16 題</span>
+                    <h2 class="text-xl md:text-2xl font-bold text-gray-800">基本人格測驗</h2>
+                    <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full font-semibold text-sm">${answered}/16 題</span>
                 </div>
                 
-                <div class="mb-8">
+                <div class="mb-6">
                     <div class="flex justify-between text-sm text-gray-600 mb-2">
                         <span>測驗進度</span>
                         <span>${Math.round(progress)}%</span>
@@ -353,24 +503,24 @@ function renderBasicQuiz() {
                     </div>
                 </div>
                 
-                <div class="mb-10 p-6 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-2xl border border-indigo-100">
+                <div class="mb-8 p-4 md:p-6 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-2xl border border-indigo-100">
                     <div class="flex items-start">
-                        <div class="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center mr-4">
-                            <span class="text-xl font-bold text-indigo-700">${quizState.basic.currentQuestion + 1}</span>
+                        <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-indigo-100 flex items-center justify-center mr-3 md:mr-4">
+                            <span class="text-lg md:text-xl font-bold text-indigo-700">${quizState.basic.currentQuestion + 1}</span>
                         </div>
                         <div class="flex-1">
-                            <h3 class="text-xl font-semibold text-gray-800 mb-3">${q.text}</h3>
-                            <div class="space-y-3">
+                            <h3 class="text-lg md:text-xl font-semibold text-gray-800 mb-3">${q.text}</h3>
+                            <div class="space-y-2 md:space-y-3">
                                 ${q.options.map((option, idx) => `
                                     <button onclick="selectAnswer(${idx}, 'basic')" 
-                                            class="w-full text-left p-4 rounded-xl border-2 transition-all duration-200 ${quizState.basic.answers[quizState.basic.currentQuestion] === idx ? 'border-indigo-500 bg-indigo-50 shadow-md' : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'}">
+                                            class="w-full text-left p-3 md:p-4 rounded-xl border-2 transition-all duration-200 ${quizState.basic.answers[quizState.basic.currentQuestion] === idx ? 'border-indigo-500 bg-indigo-50 shadow-md' : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'}">
                                         <div class="flex items-center">
-                                            <div class="w-8 h-8 rounded-full border-2 flex items-center justify-center mr-3 ${quizState.basic.answers[quizState.basic.currentQuestion] === idx ? 'border-indigo-500 bg-indigo-500 text-white' : 'border-gray-300'}">
+                                            <div class="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center mr-3 ${quizState.basic.answers[quizState.basic.currentQuestion] === idx ? 'border-indigo-500 bg-indigo-500 text-white' : 'border-gray-300'}">
                                                 ${String.fromCharCode(65 + idx)}
                                             </div>
-                                            <span class="flex-1 text-gray-800">${option}</span>
+                                            <span class="flex-1 text-gray-800 text-sm md:text-base">${option}</span>
                                             ${quizState.basic.answers[quizState.basic.currentQuestion] === idx ? 
-                                                '<span class="text-indigo-600">✓</span>' : ''}
+                                                '<span class="text-indigo-600 ml-2">✓</span>' : ''}
                                         </div>
                                     </button>
                                 `).join('')}
@@ -381,13 +531,80 @@ function renderBasicQuiz() {
                 
                 <div class="flex justify-between pt-6 border-t border-gray-200">
                     <button onclick="prevQuestion('basic')" ${quizState.basic.currentQuestion === 0 ? 'disabled' : ''} 
-                            class="px-6 py-3 rounded-lg font-medium ${quizState.basic.currentQuestion === 0 ? 'text-gray-400 cursor-not-allowed' : 'text-indigo-600 hover:bg-indigo-50'}">
+                            class="px-4 md:px-6 py-2 md:py-3 rounded-lg font-medium text-sm md:text-base ${quizState.basic.currentQuestion === 0 ? 'text-gray-400 cursor-not-allowed' : 'text-indigo-600 hover:bg-indigo-50'}">
                         ← 上一題
                     </button>
                     
                     <button onclick="nextQuestion('basic')" ${quizState.basic.answers[quizState.basic.currentQuestion] === null ? 'disabled' : ''} 
-                            class="px-8 py-3 rounded-lg font-semibold ${quizState.basic.answers[quizState.basic.currentQuestion] === null ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'btn-primary'}">
+                            class="px-4 md:px-8 py-2 md:py-3 rounded-lg font-semibold text-sm md:text-base ${quizState.basic.answers[quizState.basic.currentQuestion] === null ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'btn-primary'}">
                         ${quizState.basic.currentQuestion === 15 ? '完成測驗' : '下一題 →'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// ==================== 專家測驗渲染 ====================
+function renderExpertQuiz() {
+    const totalQuestions = 69;
+    const q = EXPERT_QUESTIONS[quizState.expert.currentQuestion];
+    const answered = quizState.expert.answers.filter(a => a !== null).length;
+    const progress = (answered / totalQuestions) * 100;
+    
+    return `
+        <div class="fade-in quiz-container">
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl md:text-2xl font-bold text-gray-800">專家測驗</h2>
+                    <span class="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 px-3 py-1 rounded-full font-semibold text-sm">${answered}/${totalQuestions} 題</span>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="flex justify-between text-sm text-gray-600 mb-2">
+                        <span>測驗進度</span>
+                        <span>${Math.round(progress)}%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${progress}%"></div>
+                    </div>
+                </div>
+                
+                <div class="mb-8 p-4 md:p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border border-purple-100">
+                    <div class="flex items-start">
+                        <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-r from-purple-100 to-pink-100 flex items-center justify-center mr-3 md:mr-4">
+                            <span class="text-lg md:text-xl font-bold text-purple-700">${quizState.expert.currentQuestion + 1}</span>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-lg md:text-xl font-semibold text-gray-800 mb-3">${q.text}</h3>
+                            <div class="space-y-2 md:space-y-3">
+                                ${q.options.map((option, idx) => `
+                                    <button onclick="selectAnswer(${idx}, 'expert')" 
+                                            class="w-full text-left p-3 md:p-4 rounded-xl border-2 transition-all duration-200 ${quizState.expert.answers[quizState.expert.currentQuestion] === idx ? 'border-purple-500 bg-purple-50 shadow-md' : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50'}">
+                                        <div class="flex items-center">
+                                            <div class="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center mr-3 ${quizState.expert.answers[quizState.expert.currentQuestion] === idx ? 'border-purple-500 bg-purple-500 text-white' : 'border-gray-300'}">
+                                                ${String.fromCharCode(65 + idx)}
+                                            </div>
+                                            <span class="flex-1 text-gray-800 text-sm md:text-base">${option}</span>
+                                            ${quizState.expert.answers[quizState.expert.currentQuestion] === idx ? 
+                                                '<span class="text-purple-600 ml-2">✓</span>' : ''}
+                                        </div>
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between pt-6 border-t border-gray-200">
+                    <button onclick="prevQuestion('expert')" ${quizState.expert.currentQuestion === 0 ? 'disabled' : ''} 
+                            class="px-4 md:px-6 py-2 md:py-3 rounded-lg font-medium text-sm md:text-base ${quizState.expert.currentQuestion === 0 ? 'text-gray-400 cursor-not-allowed' : 'text-purple-600 hover:bg-purple-50'}">
+                        ← 上一題
+                    </button>
+                    
+                    <button onclick="nextQuestion('expert')" ${quizState.expert.answers[quizState.expert.currentQuestion] === null ? 'disabled' : ''} 
+                            class="px-4 md:px-8 py-2 md:py-3 rounded-lg font-semibold text-sm md:text-base ${quizState.expert.answers[quizState.expert.currentQuestion] === null ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:opacity-90'}">
+                        ${quizState.expert.currentQuestion === 68 ? '完成測驗' : '下一題 →'}
                     </button>
                 </div>
             </div>
@@ -404,13 +621,13 @@ function renderProQuiz() {
     
     return `
         <div class="fade-in quiz-container">
-            <div class="mb-8">
+            <div class="mb-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-2xl font-bold text-gray-800">精準 Pro 測驗</h2>
-                    <span class="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 px-3 py-1 rounded-full font-semibold">${answered}/${totalQuestions} 題</span>
+                    <h2 class="text-xl md:text-2xl font-bold text-gray-800">精準 Pro 測驗</h2>
+                    <span class="bg-gradient-to-r from-amber-100 to-orange-100 text-amber-800 px-3 py-1 rounded-full font-semibold text-sm">${answered}/${totalQuestions} 題</span>
                 </div>
                 
-                <div class="mb-8">
+                <div class="mb-6">
                     <div class="flex justify-between text-sm text-gray-600 mb-2">
                         <span>測驗進度</span>
                         <span>${Math.round(progress)}%</span>
@@ -420,24 +637,24 @@ function renderProQuiz() {
                     </div>
                 </div>
                 
-                <div class="mb-10 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border border-purple-100">
+                <div class="mb-8 p-4 md:p-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-100">
                     <div class="flex items-start">
-                        <div class="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-100 to-pink-100 flex items-center justify-center mr-4">
-                            <span class="text-xl font-bold text-purple-700">${quizState.pro.currentQuestion + 1}</span>
+                        <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-r from-amber-100 to-orange-100 flex items-center justify-center mr-3 md:mr-4">
+                            <span class="text-lg md:text-xl font-bold text-amber-700">${quizState.pro.currentQuestion + 1}</span>
                         </div>
                         <div class="flex-1">
-                            <h3 class="text-xl font-semibold text-gray-800 mb-3">${q.text}</h3>
-                            <div class="space-y-3">
+                            <h3 class="text-lg md:text-xl font-semibold text-gray-800 mb-3">${q.text}</h3>
+                            <div class="space-y-2 md:space-y-3">
                                 ${q.options.map((option, idx) => `
                                     <button onclick="selectAnswer(${idx}, 'pro')" 
-                                            class="w-full text-left p-4 rounded-xl border-2 transition-all duration-200 ${quizState.pro.answers[quizState.pro.currentQuestion] === idx ? 'border-purple-500 bg-purple-50 shadow-md' : 'border-gray-200 hover:border-purple-300 hover:bg-gray-50'}">
+                                            class="w-full text-left p-3 md:p-4 rounded-xl border-2 transition-all duration-200 ${quizState.pro.answers[quizState.pro.currentQuestion] === idx ? 'border-amber-500 bg-amber-50 shadow-md' : 'border-gray-200 hover:border-amber-300 hover:bg-gray-50'}">
                                         <div class="flex items-center">
-                                            <div class="w-8 h-8 rounded-full border-2 flex items-center justify-center mr-3 ${quizState.pro.answers[quizState.pro.currentQuestion] === idx ? 'border-purple-500 bg-purple-500 text-white' : 'border-gray-300'}">
+                                            <div class="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center mr-3 ${quizState.pro.answers[quizState.pro.currentQuestion] === idx ? 'border-amber-500 bg-amber-500 text-white' : 'border-gray-300'}">
                                                 ${String.fromCharCode(65 + idx)}
                                             </div>
-                                            <span class="flex-1 text-gray-800">${option}</span>
+                                            <span class="flex-1 text-gray-800 text-sm md:text-base">${option}</span>
                                             ${quizState.pro.answers[quizState.pro.currentQuestion] === idx ? 
-                                                '<span class="text-purple-600">✓</span>' : ''}
+                                                '<span class="text-amber-600 ml-2">✓</span>' : ''}
                                         </div>
                                     </button>
                                 `).join('')}
@@ -448,12 +665,12 @@ function renderProQuiz() {
                 
                 <div class="flex justify-between pt-6 border-t border-gray-200">
                     <button onclick="prevQuestion('pro')" ${quizState.pro.currentQuestion === 0 ? 'disabled' : ''} 
-                            class="px-6 py-3 rounded-lg font-medium ${quizState.pro.currentQuestion === 0 ? 'text-gray-400 cursor-not-allowed' : 'text-purple-600 hover:bg-purple-50'}">
+                            class="px-4 md:px-6 py-2 md:py-3 rounded-lg font-medium text-sm md:text-base ${quizState.pro.currentQuestion === 0 ? 'text-gray-400 cursor-not-allowed' : 'text-amber-600 hover:bg-amber-50'}">
                         ← 上一題
                     </button>
                     
                     <button onclick="nextQuestion('pro')" ${quizState.pro.answers[quizState.pro.currentQuestion] === null ? 'disabled' : ''} 
-                            class="px-8 py-3 rounded-lg font-semibold ${quizState.pro.answers[quizState.pro.currentQuestion] === null ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:opacity-90'}">
+                            class="px-4 md:px-8 py-2 md:py-3 rounded-lg font-semibold text-sm md:text-base ${quizState.pro.answers[quizState.pro.currentQuestion] === null ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg hover:opacity-90'}">
                         ${quizState.pro.currentQuestion === 119 ? '完成測驗' : '下一題 →'}
                     </button>
                 </div>
@@ -497,7 +714,7 @@ function nextQuestion(quizType) {
 // ==================== 結果計算 ====================
 function calculateResults(quizType) {
     const questions = quizType === 'basic' ? BASIC_QUESTIONS : 
-                     quizType === 'expert' ? BASIC_QUESTIONS : PRO_QUESTIONS;
+                     quizType === 'expert' ? EXPERT_QUESTIONS : PRO_QUESTIONS;
     const answers = quizState[quizType].answers;
     
     const scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
@@ -557,165 +774,12 @@ function renderBasicResults() {
     return renderResults('basic');
 }
 
+function renderExpertResults() {
+    return renderResults('expert');
+}
+
 function renderProResults() {
-    const result = quizState.pro.result;
-    if (!result) return '<div class="text-center py-12">計算結果中...</div>';
-    
-    return `
-        <div class="fade-in">
-            <div class="text-center mb-12">
-                <div class="w-32 h-32 mx-auto mb-8 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 flex items-center justify-center shadow-lg">
-                    <span class="text-5xl font-bold text-amber-700">${result.type}</span>
-                </div>
-                <h2 class="text-3xl font-bold text-gray-800 mb-4">${result.title} - Pro級分析</h2>
-                <p class="text-gray-600 text-lg max-w-2xl mx-auto mb-10">${result.description}</p>
-                <p class="text-amber-600 font-semibold mb-6">🎯 基於120題深度分析，準確度達95%以上</p>
-            </div>
-            
-            <div class="grid md:grid-cols-2 gap-8 mb-12">
-                ${result.dimensions.map(dim => `
-                    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                        <div class="flex justify-between items-center mb-4">
-                            <h4 class="text-lg font-bold text-gray-800">${dim.label}</h4>
-                            <span class="text-xl font-bold text-amber-600">${dim.pct}%</span>
-                        </div>
-                        <div class="mb-3">
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: ${dim.pct}%"></div>
-                            </div>
-                        </div>
-                        <div class="flex justify-between text-sm text-gray-600">
-                            <span>${dim.left}</span>
-                            <span>${dim.right}</span>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-            
-            <div class="bg-gradient-to-r from-amber-50 to-orange-50 p-8 rounded-2xl border border-amber-200 mb-12">
-                <h3 class="text-2xl font-bold text-gray-800 mb-6">🏆 Pro級詳細分析</h3>
-                <div class="grid md:grid-cols-2 gap-6 mb-8">
-                    <div class="bg-white p-6 rounded-xl border border-amber-100">
-                        <h4 class="text-xl font-bold text-gray-800 mb-3">💼 職業優勢</h4>
-                        <p class="text-gray-600">您的性格類型在${getCareerStrengths(result.type)}方面表現突出。</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl border border-amber-100">
-                        <h4 class="text-xl font-bold text-gray-800 mb-3">🤝 人際關係</h4>
-                        <p class="text-gray-600">您最適合與${getCompatibleTypes(result.type)}類型的人建立深厚關係。</p>
-                    </div>
-                </div>
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div class="bg-white p-6 rounded-xl border border-amber-100">
-                        <h4 class="text-xl font-bold text-gray-800 mb-3">📈 成長建議</h4>
-                        <p class="text-gray-600">建議多嘗試${getGrowthAreas(result.type)}以獲得更好的平衡發展。</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl border border-amber-100">
-                        <h4 class="text-xl font-bold text-gray-800 mb-3">⚡ 壓力管理</h4>
-                        <p class="text-gray-600">壓力下建議${getStressTips(result.type)}以維持心理健康。</p>
-                    </div>
-                </div>
-            </div>
-            
-            ${renderShareButtons(result.type, 'pro')}
-            
-            <div class="text-center mt-8">
-                <button onclick="restartQuiz('pro')" class="px-8 py-3 border-2 border-amber-300 text-amber-700 font-semibold rounded-xl hover:bg-amber-50 mr-4">
-                    重新測試 Pro
-                </button>
-                <button onclick="switchTab('basic')" class="px-8 py-3 btn-primary">
-                    返回基本測驗
-                </button>
-            </div>
-        </div>
-    `;
-}
-
-function getCareerStrengths(type) {
-    const strengths = {
-        'ISTJ': '組織規劃、細節管理、可靠性',
-        'ISFJ': '客戶服務、團隊支持、細心執行',
-        'INFJ': '策略規劃、人文關懷、創新引導',
-        'INTJ': '系統設計、長期規劃、邏輯分析',
-        'ISTP': '技術操作、應急處理、實務解決',
-        'ISFP': '藝術創作、客戶體驗、和諧維護',
-        'INFP': '創意寫作、價值推廣、人文關懷',
-        'INTP': '科技研發、理論分析、系統優化',
-        'ESTP': '業務拓展、危機處理、快速決策',
-        'ESFP': '公關協調、活動策劃、團隊激勵',
-        'ENFP': '創意行銷、團隊建設、變革推動',
-        'ENTP': '商業創新、策略辯論、機會識別',
-        'ESTJ': '專案管理、流程優化、目標達成',
-        'ESFJ': '團隊管理、客戶關係、執行協調',
-        'ENFJ': '領導激勵、人才培養、願景傳達',
-        'ENTJ': '戰略規劃、資源整合、目標導向'
-    };
-    return strengths[type] || '專業技能、團隊合作和問題解決';
-}
-
-function getCompatibleTypes(type) {
-    const compatibilities = {
-        'ISTJ': 'ESTJ、ESFJ',
-        'ISFJ': 'ESFJ、ISTJ',
-        'INFJ': 'ENFJ、ENTP',
-        'INTJ': 'ENTJ、INTP',
-        'ISTP': 'ESTP、ESFP',
-        'ISFP': 'ESFP、ISTP',
-        'INFP': 'ENFP、INFJ',
-        'INTP': 'ENTP、INTJ',
-        'ESTP': 'ISTP、ESFP',
-        'ESFP': 'ISFP、ESTP',
-        'ENFP': 'INFJ、ENTJ',
-        'ENTP': 'INTJ、ENFP',
-        'ESTJ': 'ISTJ、ESFJ',
-        'ESFJ': 'ISFJ、ESTJ',
-        'ENFJ': 'INFJ、ENFP',
-        'ENTJ': 'INTJ、ENFJ'
-    };
-    return compatibilities[type] || '互補類型';
-}
-
-function getGrowthAreas(type) {
-    const areas = {
-        'ISTJ': '靈活應變和創意思考',
-        'ISFJ': '設定界線和表達需求',
-        'INFJ': '實際執行和自我照顧',
-        'INTJ': '情感表達和團隊協作',
-        'ISTP': '長期規劃和承諾堅持',
-        'ISFP': '理性分析和目標設定',
-        'INFP': '實際行動和結果導向',
-        'INTP': '情感連結和執行落實',
-        'ESTP': '耐心觀察和長期規劃',
-        'ESFP': '深度思考和延遲滿足',
-        'ENFP': '專注執行和細節管理',
-        'ENTP': '情感細膩和持續專注',
-        'ESTJ': '靈活變通和情感理解',
-        'ESFJ': '客觀分析和自我優先',
-        'ENFJ': '理性批判和自我反省',
-        'ENTJ': '團隊共識和過程享受'
-    };
-    return areas[type] || '多樣化體驗和反思學習';
-}
-
-function getStressTips(type) {
-    const tips = {
-        'ISTJ': '適當放鬆、接受不完美',
-        'ISFJ': '學會拒絕、尋求支持',
-        'INFJ': '現實檢驗、自我照顧',
-        'INTJ': '耐心等待、接納不確定',
-        'ISTP': '規劃休息、表達感受',
-        'ISFP': '理性分析、設定目標',
-        'INFP': '行動落實、關注現實',
-        'INTP': '情感表達、實際行動',
-        'ESTP': '深度思考、長期視角',
-        'ESFP': '獨處充電、延遲滿足',
-        'ENFP': '專注當下、完成承諾',
-        'ENTP': '情感連結、持續專注',
-        'ESTJ': '放鬆控制、接受變化',
-        'ESFJ': '自我優先、客觀判斷',
-        'ENFJ': '設定界線、理性分析',
-        'ENTJ': '團隊合作、過程享受'
-    };
-    return tips[type] || '適當休息、尋求支持和保持運動';
+    return renderResults('pro');
 }
 
 function renderResults(quizType) {
@@ -724,84 +788,112 @@ function renderResults(quizType) {
     
     const isPro = quizType === 'pro';
     const isExpert = quizType === 'expert';
+    const quizName = isPro ? 'Pro級測驗' : isExpert ? '專家測驗' : '基本測驗';
+    const quizQuestions = isPro ? '120題' : isExpert ? '69題' : '16題';
+    
     const bgColor = isPro ? 'from-amber-100 to-orange-100' : 
                    isExpert ? 'from-purple-100 to-pink-100' : 'from-green-100 to-emerald-100';
     const textColor = isPro ? 'text-amber-700' : 
                      isExpert ? 'text-purple-700' : 'text-green-700';
-    const btnColor = isPro ? 'amber' : isExpert ? 'purple' : 'indigo';
+    const borderColor = isPro ? 'border-amber-200' : 
+                       isExpert ? 'border-purple-200' : 'border-green-200';
     
-    return `
-        <div class="fade-in">
-            <div class="text-center mb-12">
-                <div class="w-32 h-32 mx-auto mb-8 rounded-full bg-gradient-to-r ${bgColor} flex items-center justify-center shadow-lg">
-                    <span class="text-5xl font-bold ${textColor}">${result.type}</span>
-                </div>
-                <h2 class="text-3xl font-bold text-gray-800 mb-4">${result.title}${isPro ? ' - Pro級分析' : isExpert ? ' - 專家分析' : ''}</h2>
-                <p class="text-gray-600 text-lg max-w-2xl mx-auto mb-10">${result.description}</p>
-            </div>
-            
-            <div class="grid md:grid-cols-2 gap-8 mb-12">
-                ${result.dimensions.map(dim => `
-                    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                        <div class="flex justify-between items-center mb-4">
-                            <h4 class="text-lg font-bold text-gray-800">${dim.label}</h4>
-                            <span class="text-xl font-bold ${textColor}">${dim.pct}%</span>
-                        </div>
-                        <div class="mb-3">
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: ${dim.pct}%"></div>
-                            </div>
-                        </div>
-                        <div class="flex justify-between text-sm text-gray-600">
-                            <span>${dim.left}</span>
-                            <span>${dim.right}</span>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-            
-            ${renderShareButtons(result.type, quizType)}
-            
-            <div class="text-center mt-8">
-                <button onclick="restartQuiz('${quizType}')" class="px-8 py-3 border-2 border-${btnColor}-300 text-${btnColor}-700 font-semibold rounded-xl hover:bg-${btnColor}-50 mr-4">
-                    重新測試
-                </button>
-                <button onclick="switchTab('basic')" class="px-8 py-3 btn-primary">
-                    返回首頁
-                </button>
-            </div>
-        </div>
-    `;
-}
-
-function renderShareButtons(mbtiType, quizType) {
-    const shareText = `我剛完成MBTI人格測驗，結果是${mbtiType}！快來測試你的性格類型吧！`;
+    // 分享文字
+    const shareText = `我剛完成MBTI ${quizName}，結果是${result.type}（${result.title}）！快來測試你的性格類型吧！`;
     const shareUrl = window.location.href;
     
     return `
-        <div class="bg-gradient-to-r from-blue-50 to-cyan-50 p-8 rounded-2xl border border-blue-200 mb-12">
-            <h3 class="text-2xl font-bold text-gray-800 mb-6">📢 分享結果</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <button onclick="shareResult('facebook', '${mbtiType}', '${shareText}', '${shareUrl}')" 
-                        class="bg-blue-600 text-white p-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors">
-                    Facebook
+        <div class="fade-in result-container">
+            <!-- 主要結果卡片 -->
+            <div class="bg-gradient-to-r ${bgColor} p-4 md:p-6 rounded-2xl border ${borderColor} mb-4">
+                <div class="text-center mb-6">
+                    <div class="w-20 h-20 md:w-24 md:h-24 mx-auto mb-4 rounded-full bg-white flex items-center justify-center shadow-lg">
+                        <span class="text-3xl md:text-4xl font-bold ${textColor}">${result.type}</span>
+                    </div>
+                    <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-2">${result.title}</h2>
+                    <p class="text-gray-600 text-sm md:text-base">${result.description}</p>
+                    <p class="text-sm text-gray-500 mt-2">基於${quizQuestions}深度分析</p>
+                </div>
+                
+                <!-- 四個維度顯示 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                    ${result.dimensions.map(dim => `
+                        <div class="bg-white p-4 rounded-xl border border-gray-200">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="font-bold text-gray-800 text-sm">${dim.label}</h4>
+                                <span class="font-bold ${textColor}">${dim.pct}%</span>
+                            </div>
+                            <div class="mb-2">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${dim.pct}%"></div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-600">
+                                <span>${dim.left}</span>
+                                <span>${dim.right}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <!-- 分享區塊 -->
+                <div class="bg-white p-4 rounded-xl border border-gray-200 mb-4">
+                    <h3 class="font-bold text-gray-800 mb-3 text-center">📢 分享您的結果</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="shareResult('facebook', '${result.type}', '${shareText}', '${shareUrl}')" 
+                                class="bg-blue-600 text-white p-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm">
+                            Facebook
+                        </button>
+                        <button onclick="shareResult('line', '${result.type}', '${shareText}', '${shareUrl}')" 
+                                class="bg-green-500 text-white p-2 rounded-lg font-semibold hover:bg-green-600 transition-colors text-sm">
+                            Line
+                        </button>
+                        <button onclick="shareResult('copy', '${result.type}', '${shareText}', '${shareUrl}')" 
+                                class="bg-gray-700 text-white p-2 rounded-lg font-semibold hover:bg-gray-800 transition-colors text-sm">
+                            複製連結
+                        </button>
+                        <button onclick="shareResult('whatsapp', '${result.type}', '${shareText}', '${shareUrl}')" 
+                                class="bg-green-600 text-white p-2 rounded-lg font-semibold hover:bg-green-700 transition-colors text-sm">
+                            WhatsApp
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 進階測驗推薦 -->
+                ${!isPro && !isExpert ? `
+                <div class="bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-xl border border-amber-200">
+                    <h3 class="font-bold text-gray-800 mb-3">🎯 探索進階分析</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="bg-white p-3 rounded-lg border border-amber-100">
+                            <h4 class="font-bold text-gray-800 mb-2">專家測驗 (69題)</h4>
+                            <p class="text-gray-600 text-xs mb-2">深度性格分析，職業建議與人際關係指南</p>
+                            <button onclick="showUnlockPage('expert')" class="w-full py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-bold text-sm hover:opacity-90">
+                                解鎖專家測驗
+                            </button>
+                        </div>
+                        
+                        <div class="bg-white p-3 rounded-lg border border-purple-100">
+                            <h4 class="font-bold text-gray-800 mb-2">精準 Pro (120題)</h4>
+                            <p class="text-gray-600 text-xs mb-2">終極性格評估，最全面的性格剖析與專業建議</p>
+                            <button onclick="showUnlockPage('pro')" class="w-full py-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg font-bold text-sm hover:opacity-90">
+                                解鎖精準 Pro
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+            </div>
+            
+            <!-- 按鈕區 -->
+            <div class="flex justify-center space-x-3 mt-4">
+                <button onclick="restartQuiz('${quizType}')" 
+                        class="px-4 py-2 border-2 ${isPro ? 'border-amber-300 text-amber-700 hover:bg-amber-50' : isExpert ? 'border-purple-300 text-purple-700 hover:bg-purple-50' : 'border-indigo-300 text-indigo-700 hover:bg-indigo-50'} font-semibold rounded-lg text-sm">
+                    重新測試
                 </button>
-                <button onclick="shareResult('line', '${mbtiType}', '${shareText}', '${shareUrl}')" 
-                        class="bg-green-500 text-white p-4 rounded-xl font-semibold hover:bg-green-600 transition-colors">
-                    Line
-                </button>
-                <button onclick="shareResult('copy', '${mbtiType}', '${shareText}', '${shareUrl}')" 
-                        class="bg-gray-700 text-white p-4 rounded-xl font-semibold hover:bg-gray-800 transition-colors">
-                    複製連結
-                </button>
-                <button onclick="shareResult('whatsapp', '${mbtiType}', '${shareText}', '${shareUrl}')" 
-                        class="bg-green-600 text-white p-4 rounded-xl font-semibold hover:bg-green-700 transition-colors">
-                    WhatsApp
+                <button onclick="switchTab('basic')" class="px-4 py-2 btn-primary text-sm">
+                    返回首頁
                 </button>
             </div>
-            <p class="text-sm text-gray-500 mt-4 text-center">
-                分享給朋友，一起探索性格的奧秘！
-            </p>
         </div>
     `;
 }
@@ -820,9 +912,11 @@ function shareResult(platform, mbtiType, text, url) {
             window.open(`https://wa.me/?text=${encodeURIComponent(fullText)}`, '_blank');
             break;
         case 'copy':
-            navigator.clipboard.writeText(fullText).then(() => {
-                alert('連結已複製到剪貼簿！');
-            }).catch(() => {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(fullText).then(() => {
+                    alert('連結已複製到剪貼簿！');
+                });
+            } else {
                 // 降級方案
                 const textArea = document.createElement('textarea');
                 textArea.value = fullText;
@@ -831,7 +925,7 @@ function shareResult(platform, mbtiType, text, url) {
                 document.execCommand('copy');
                 document.body.removeChild(textArea);
                 alert('連結已複製到剪貼簿！');
-            });
+            }
             break;
     }
 }
@@ -849,23 +943,23 @@ function restartQuiz(quizType) {
 // ==================== 鎖定頁面 ====================
 function renderLockedPage(type, title, description) {
     return `
-        <div class="fade-in text-center py-12">
-            <div class="w-24 h-24 mx-auto mb-8 rounded-full bg-gradient-to-r from-gray-200 to-gray-300 flex items-center justify-center">
-                <span class="text-4xl">🔒</span>
+        <div class="fade-in text-center py-8">
+            <div class="w-16 h-16 md:w-20 md:h-20 mx-auto mb-6 rounded-full bg-gradient-to-r from-gray-200 to-gray-300 flex items-center justify-center">
+                <span class="text-3xl">🔒</span>
             </div>
-            <h2 class="text-3xl font-bold text-gray-800 mb-4">${title}</h2>
-            <p class="text-gray-600 text-lg max-w-xl mx-auto mb-10">${description}</p>
+            <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-3">${title}</h2>
+            <p class="text-gray-600 text-sm md:text-base max-w-xl mx-auto mb-8">${description}</p>
             
             <div class="max-w-md mx-auto">
-                <div class="bg-gradient-to-r from-amber-50 to-orange-50 p-8 rounded-2xl border border-amber-200 mb-10">
-                    <h3 class="text-2xl font-bold text-gray-800 mb-6">解鎖 ${title}</h3>
-                    <p class="text-gray-700 mb-8">
+                <div class="bg-gradient-to-r from-amber-50 to-orange-50 p-6 rounded-2xl border border-amber-200 mb-8">
+                    <h3 class="text-lg md:text-xl font-bold text-gray-800 mb-4">解鎖 ${title}</h3>
+                    <p class="text-gray-700 mb-6 text-sm md:text-base">
                         點擊下方按鈕，觀看完贊助廣告後即可立即解鎖。
                         <span class="block font-semibold mt-2">感謝您支持免費服務！</span>
                     </p>
                     
                     <button onclick="startUnlockProcess('${type}', this)" 
-                            class="btn-unlock w-full text-lg">
+                            class="btn-unlock w-full text-base md:text-lg">
                         🎬 點擊觀看廣告解鎖
                     </button>
                 </div>
@@ -886,8 +980,8 @@ function startUnlockProcess(type, button) {
     button.innerHTML = '⏳ 正在觸發廣告...';
     button.disabled = true;
     
-    // 觸發 HilltopAds 廣告
-    triggerHilltopAd(type);
+    // 觸發不同的廣告腳本
+    triggerUnlockAd(type);
     
     // 倒數計時
     let countdown = 8;
@@ -902,14 +996,38 @@ function startUnlockProcess(type, button) {
     }, 1000);
 }
 
-function triggerHilltopAd(type) {
-    const scripts = {
-        expert: `(function(aco){var d=document,s=d.createElement('script'),l=d.scripts[d.scripts.length-1];s.settings=aco||{};s.src="//starry-perception.com/ctD.9M6Nbh2x5SltS-WzQy9-Naj/chywNGjdUF2QOTSX0y2ENwzIIA2GN/TmcTwl";s.async=true;s.referrerPolicy='no-referrer-when-downgrade';l.parentNode.insertBefore(s,l);})({})`,
-        pro: `(function(lwa){var d=document,s=d.createElement('script'),l=d.scripts[d.scripts.length-1];s.settings=lwa||{};s.src="//starry-perception.com/c.DX9y6jbT2/5Zl_StWYQa9dN/jPc_yZN/jeUG2FN/yV0o2NNNz/I/2/N/TKYx4_";s.async=true;s.referrerPolicy='no-referrer-when-downgrade';l.parentNode.insertBefore(s,l);})({})`
-    };
+function triggerUnlockAd(type) {
+    // 使用不同的廣告腳本確保單獨觸發
+    let scriptContent = '';
+    
+    if (type === 'expert') {
+        // 專家測驗廣告腳本
+        scriptContent = `
+            (function(){
+                var d=document, s=d.createElement('script');
+                s.src='https://starry-perception.com/ctD.9M6Nbh2x5SltS-WzQy9-Naj/chywNGjdUF2QOTSX0y2ENwzIIA2GN/TmcTwl';
+                s.async=true;
+                s.referrerPolicy='no-referrer-when-downgrade';
+                d.head.appendChild(s);
+                console.log('專家測驗廣告觸發');
+            })();
+        `;
+    } else if (type === 'pro') {
+        // Pro測驗廣告腳本（不同的來源）
+        scriptContent = `
+            (function(){
+                var d=document, s=d.createElement('script');
+                s.src='https://starry-perception.com/c.DX9y6jbT2/5Zl_StWYQa9dN/jPc_yZN/jeUG2FN/yV0o2NNNz/I/2/N/TKYx4_';
+                s.async=true;
+                s.referrerPolicy='no-referrer-when-downgrade';
+                d.head.appendChild(s);
+                console.log('Pro測驗廣告觸發');
+            })();
+        `;
+    }
     
     const script = document.createElement('script');
-    script.innerHTML = scripts[type];
+    script.innerHTML = scriptContent;
     document.head.appendChild(script);
     
     // 5秒後移除
@@ -936,31 +1054,6 @@ function completeUnlock(type, button, originalText) {
     }, 2000);
 }
 
-// ==================== 專家測驗（簡化版） ====================
-function renderExpertQuiz() {
-    return `
-        <div class="text-center py-12">
-            <div class="w-32 h-32 mx-auto mb-8 rounded-full bg-gradient-to-r from-purple-100 to-pink-100 flex items-center justify-center">
-                <span class="text-5xl">🎯</span>
-            </div>
-            <h2 class="text-3xl font-bold text-gray-800 mb-4">專家測驗即將推出</h2>
-            <p class="text-gray-600 text-lg max-w-xl mx-auto mb-10">
-                感謝您解鎖專家測驗！我們正在準備69題深度分析題目，敬請期待！
-            </p>
-            <button onclick="switchTab('pro')" class="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold hover:opacity-90 mr-4">
-                試試精準 Pro
-            </button>
-            <button onclick="switchTab('basic')" class="px-8 py-3 btn-primary">
-                返回基本測驗
-            </button>
-        </div>
-    `;
-}
-
-function renderExpertResults() {
-    return renderResults('expert');
-}
-
 // ==================== 廣告系統 ====================
 function loadAds() {
     // 載入底部廣告
@@ -982,6 +1075,7 @@ function loadAds() {
         if (typeof adsbygoogle !== 'undefined') {
             try {
                 (adsbygoogle = window.adsbygoogle || []).push({});
+                console.log('Google AdSense 廣告已載入');
             } catch (e) {
                 console.log('廣告載入中...');
             }
